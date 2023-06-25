@@ -13,19 +13,11 @@ public class SymbolTable {
         symbolStack = new Stack<>();
         symbolStack.add(new HashMap<>());
     }
+
     public enum Type {
         INT, BOOL, STRING, ARRAY, ERROR
     }
 
-    public Type findType (String value) {
-        if(value.charAt(0) == '\"')
-            return SymbolTable.Type.STRING;
-        else if(value.equals("True") || value.equals("False"))
-            return SymbolTable.Type.BOOL;
-        else if(value.matches("0 | [1-9] [0-9]+"))
-            return SymbolTable.Type.INT;
-        return null;
-    }
     public void openScope() {
         Map<String, Type> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);
@@ -74,6 +66,7 @@ public class SymbolTable {
      * <p> 1 - not in scope </p>
      * <p> 2 - type mismatch </p>
      */
+
     public int check(String id, Type type) {
         int depth = symbolStack.size()-1;
         while(depth >= 0)
