@@ -8,23 +8,24 @@ import java.util.Vector;
 public class SymbolTable {
 
     private final Vector<Map<String, Type>> symbolStack;
-    public enum Type {
-        INT, BOOL, STRING
-    }
-    public Type getType (String type) {
-        if(type.charAt(0) == '\"')
-            return SymbolTable.Type.STRING;
-        else if(type.equals("True") || type.equals("False"))
-            return SymbolTable.Type.BOOL;
-        else
-            return SymbolTable.Type.INT;
-    }
     public SymbolTable()
     {
         symbolStack = new Stack<>();
         symbolStack.add(new HashMap<>());
     }
+    public enum Type {
+        INT, BOOL, STRING, ARRAY, ERROR
+    }
 
+    public Type findType (String value) {
+        if(value.charAt(0) == '\"')
+            return SymbolTable.Type.STRING;
+        else if(value.equals("True") || value.equals("False"))
+            return SymbolTable.Type.BOOL;
+        else if(value.matches("0 | [1-9] [0-9]+"))
+            return SymbolTable.Type.INT;
+        return null;
+    }
     public void openScope() {
         Map<String, Type> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);
@@ -36,7 +37,7 @@ public class SymbolTable {
         symbolStack.remove(symbolStack.size() - 1);
     }
 
-    public boolean add(String id, String type) {
+    public boolean add(String id, Type type) {
         Map<String, Type> top = symbolStack.lastElement();
         if(top.containsKey(id))
         {
@@ -44,17 +45,17 @@ public class SymbolTable {
         }
         else
         {
-            top.put(id, getType(type));
+            top.put(id, type);
             return true;
         }
     }
 
-    public boolean contains(String id, String type) {
+    public boolean contains(String id, Type type) {
         int depth = symbolStack.size()-1;
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id) == getType(type))
+                if(symbolStack.get(depth).get(id) == type)
                     return true;
             }
             depth -= 1;
@@ -62,6 +63,10 @@ public class SymbolTable {
         return false;
     }
 
+    public Type getType(String id) {
+        int depth = symbolStack.size()-1;
+        return symbolStack.get(depth).get(id);
+    }
     /**
      * Perform scope and type checking on a variable
      * @return
@@ -69,12 +74,12 @@ public class SymbolTable {
      * <p> 1 - not in scope </p>
      * <p> 2 - type mismatch </p>
      */
-    public int check(String id, String type) {
+    public int check(String id, Type type) {
         int depth = symbolStack.size()-1;
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id) != getType(type))
+                if(symbolStack.get(depth).get(id) != type)
                     return 2;
                 return 0;
             }
