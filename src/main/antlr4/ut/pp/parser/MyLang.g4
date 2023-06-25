@@ -40,7 +40,7 @@ var_def: VAR IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';' ;
 
-primitive_type: INT ;
+primitive_type: INT | BOOL;
 compound_type: array | STRING;
 array: '[' args ']';
 
@@ -49,9 +49,10 @@ parameter: VAR IDENTIFIER;
 args: (expression (',' expression)*)?;
 
 VAR: 'var';
-IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
+BOOL: 'True' | 'False';
 
-INT: [1-9] [0-9]*;
+IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
+INT: '0' | ([1-9] [0-9]*);
 STRING: '"' (ESCAPE_SEQUENCE| ~('"'))* '"';
 ESCAPE_SEQUENCE: '\\"';
 
