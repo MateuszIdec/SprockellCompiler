@@ -56,7 +56,14 @@ public class SymbolTable {
 
     public Type getType (String id) {
         int depth = symbolStack.size()-1;
-        return symbolStack.get(depth).get(id);
+        while(depth >= 0)
+        {
+            if(symbolStack.get(depth).containsKey(id)) {
+                return symbolStack.get(depth).get(id);
+            }
+            depth -= 1;
+        }
+        return null;
     }
     /**
      * Perform scope and type checking on a variable
