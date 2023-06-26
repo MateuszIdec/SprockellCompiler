@@ -2,7 +2,6 @@ package main.antlr4.ut.pp.parser;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import ut.pp.SymbolTable;
-
 import java.util.ArrayList;
 
 public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
@@ -52,9 +51,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     }
 
     String printVariable(Attrs attrs) {
-        StringBuilder result = new StringBuilder();
-        result.append(attrs.name + " " + attrs.operator + " " + attrs.value.get(0));
-        return result.toString();
+        return attrs.name + " " + attrs.operator + " " + attrs.value.get(0);
     }
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
@@ -112,9 +109,59 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs = new Attrs();
-        if(ctx.children.size() == 1) {
+        if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
+        } else if(ctx.getChildCount() == 3) {
+            System.out.println("If statement");
+            Attrs LHS = visit(ctx.getChild(0));
+            Attrs operator = visit(ctx.getChild(1));
+            Attrs RHS = visit(ctx.getChild(2));
+            String name;
+            ArrayList value;
+            SymbolTable.Type type;
+
+            if(LHS.name != null) {
+                name = LHS.name;
+                type = RHS.type;
+                value = RHS.value;
+
+            } else {
+                name = RHS.name;
+                type = LHS.type;
+                value = RHS.value;
+            }
+            int varCheck = symbolTable.check(name, type);
+            attrs.name = name;
+            attrs.type = type;
+            attrs.value = value;
+            attrs.operator = operator.operator;
+
+            if(varCheck == 1) {
+                System.err.println("In \"if " + printVariable(attrs) + "\" variable \"" + name + "\" is not in scope");
+                attrs.type = SymbolTable.Type.ERROR;
+            } else if (varCheck == 2) {
+                System.err.println("Cannot compare \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name) + ", got " + type);
+                attrs.type = SymbolTable.Type.ERROR;
+            }
+
         }
+        return attrs;
+    }
+
+    @Override
+    public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
+        Attrs attrs = new Attrs();
+        Attrs expression = visit(ctx.getChild(1));
+        Attrs compoundStatement = visit(ctx.getChild(2));
+        attrs.type = SymbolTable.Type.BOOL;
+        attrs.value = expression.value;
+        return attrs;
+    }
+
+    @Override
+    public Attrs visitRelational_operator(MyLangParser.Relational_operatorContext ctx) {
+        Attrs attrs = new Attrs();
+        attrs.operator = ctx.getText();
         return attrs;
     }
 
@@ -151,9 +198,12 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         if(ctx.IDENTIFIER() != null) {
             attrs.name = ctx.getText();
         }
-        else if(ctx.children.size() == 1) {
+        else if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
         }
+        else if (ctx.getChildCount() == 3)
+            attrs = visit(ctx.getChild(1));
+
         return attrs;
     }
 
@@ -213,4 +263,5 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         }
         return attrs;
     }
+
 }
