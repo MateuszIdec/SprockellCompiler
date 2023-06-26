@@ -1,9 +1,12 @@
-package ut.pp;
+package Errors;
+
+import org.antlr.v4.runtime.ParserRuleContext;
+import ut.pp.Attrs;
 
 public class RedefinitonError extends CompilerError {
 
-    public RedefinitonError(int line_nr, int column_nr, Attrs attrs) {
-        super(line_nr, column_nr, attrs);
+    public RedefinitonError(ParserRuleContext ctx, Attrs attrs) {
+        super(ctx, attrs);
     }
 
     @Override
