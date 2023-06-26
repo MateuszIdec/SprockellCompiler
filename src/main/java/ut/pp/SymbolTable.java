@@ -65,9 +65,13 @@ public class SymbolTable {
         return false;
     }
 
-    public Var getType(String id) {
+    public Type getType (String id) {
         int depth = symbolStack.size()-1;
-        return symbolStack.get(depth).get(id);
+        return symbolStack.get(depth).get(id).type;
+    }
+    public ArrayList<String> getValue (String id) {
+        int depth = symbolStack.size()-1;
+        return symbolStack.get(depth).get(id).value;
     }
     /**
      * Perform scope and type checking on a variable

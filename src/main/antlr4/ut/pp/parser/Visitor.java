@@ -34,25 +34,40 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         String name = ctx.getChild(1).getText();
         Attrs attrs = new Attrs();
-        System.out.println("Var def " + name);
+
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
             System.err.println("Variable " + name + " is already defined in this scope");
             attrs.type = SymbolTable.Type.ERROR;
             return attrs;
         }
-
         attrs = visit(ctx.getChild(3));
-        attrs.operator = ctx.getChild(2).getText();
-        attrs.name = name;
-        // If on the RHS there is another variable we check if it exists in current scope or in outer scopes
 
-        symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
+        // type in RHS case
+        if(attrs.name == null) {
+            attrs.operator = ctx.getChild(2).getText();
+            attrs.name = name;
+        }
+        // variable in RHS case
+        else {
+            // Check if variable on RHS exists
+            if(symbolTable.contains(attrs.name)) {
+                attrs.value = symbolTable.getValue(attrs.name);
+                symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
+            }
+            else {
+                System.err.println("In \"var " + name + " = " + attrs.name +  "\" \"" + attrs.name + "\" is not defined");
+                attrs.type = SymbolTable.Type.ERROR;
+                return attrs;
+            }
+        }
         System.out.println("Definition: " + name + " " + attrs.type + " " + attrs.value);
 
-        if(attrs.type == SymbolTable.Type.ERROR) {
-            System.err.println("In " + "\"var " + name + " = "+ attrs.value + "\"" + " types don't match");
-        }
+
+
+        // If on the RHS there is another variable we check if it exists in current scope or in outer scopes
+
+      ;
 
         return attrs;
     }
@@ -213,7 +228,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         return attrs;
     }
 
-    //TODO: Check if the variable exists in current or outer scope (used in var x = a;)
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
         Attrs attrs = new Attrs();
@@ -242,6 +256,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         return attrs;
     }
 
+
     @Override
     public Attrs visitCompound_statement(MyLangParser.Compound_statementContext ctx) {
         return visit(ctx.getChild(1));
@@ -260,6 +275,9 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
     @Override
     public Attrs visitCompound_type(MyLangParser.Compound_typeContext ctx) {
+        Attrs attrs = new Attrs();
+        if(ctx.STRING() != null)
+            attrs.type = SymbolTable.Type.STRING;
         return visit(ctx.getChild(0));
     }
 
