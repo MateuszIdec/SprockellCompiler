@@ -15,12 +15,11 @@ public class TestParser {
     public void oneHello() {
         String input = "{ var x = a10; } " +
                 "x = 2;";
-        String input1 = "{ var x = 5; x = True; var y = [1,2,True]; }" +
-                "x = 10;";
+        String input1 = "var x = [1,True,3];";
         String input2 = "for (var x = 5; x < 5; z+=1) { y = 4; }";
-        String input3 = "if x == 2 { x = 3;}";
+        String input3 = "var x = 2; if x == 2 { y = 3;}";
 
-        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input1));
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input3));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();

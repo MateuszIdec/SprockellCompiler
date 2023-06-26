@@ -2,7 +2,10 @@ package main.antlr4.ut.pp.parser;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import ut.pp.SymbolTable;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     SymbolTable symbolTable = new SymbolTable();
@@ -29,9 +32,9 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         String name = ctx.getChild(1).getText();
         Attrs attrs = new Attrs();
-
+        System.out.println("Var def " + name);
         // Check if variable is already defined in local scope
-        if(!symbolTable.checkLocalScope(name)) {
+        if(symbolTable.checkLocalScope(name)) {
             System.err.println("Variable " + name + " is already defined in this scope");
             attrs.type = SymbolTable.Type.ERROR;
             return attrs;
@@ -40,8 +43,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         attrs = visit(ctx.getChild(3));
         attrs.operator = ctx.getChild(2).getText();
         attrs.name = name;
-
-
         // If on the RHS there is another variable we check if it exists in current scope or in outer scopes
 
         symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
@@ -60,6 +61,11 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             attrs = visit(ctx.getChild(0));
         }
         return attrs;
+    }
+
+    @Override
+    public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
+        return visit(ctx.getChild(0));
     }
 
     String printVariable(Attrs attrs) {
@@ -235,7 +241,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
     @Override
     public Attrs visitCompound_statement(MyLangParser.Compound_statementContext ctx) {
-        return visit(ctx.getChild(0));
+        return visit(ctx.getChild(1));
     }
 
     @Override
@@ -246,9 +252,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitStatement(MyLangParser.StatementContext ctx) {
         Attrs attrs = visit(ctx.getChild(0));
-        if(attrs != null)
-            System.out.println("Statement: " + attrs.type);
-
         return attrs;
     }
 
@@ -275,14 +278,11 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
                 x++;
             childAttrs = visit(ctx.getChild(x));
             if(type != childAttrs.type) {
-                System.out.println("Error in args");
                 attrs.type = SymbolTable.Type.ERROR;
 
             }
-
             attrs.value.add(childAttrs.value.get(0));
         }
         return attrs;
     }
-
 }
