@@ -9,6 +9,7 @@ import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     SymbolTable symbolTable = new SymbolTable();
+    //TODO: Think if we need operator and ArrayList for values. Right now we only use it in errors.
     static class Attrs {
         public String name;
         public String operator;
@@ -28,6 +29,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         System.out.println("Exiting scope ");
         return null;
     }
+
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         String name = ctx.getChild(1).getText();
@@ -71,6 +73,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     String printVariable(Attrs attrs) {
         return attrs.name + " " + attrs.operator + " " + attrs.value.get(0);
     }
+
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
         Attrs attrs = new Attrs();
@@ -264,7 +267,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
         return visit(ctx.getChild(1));
     }
-    //TODO: Move type checking to visitArray
+
     @Override
     public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
         Attrs attrs = new Attrs();
