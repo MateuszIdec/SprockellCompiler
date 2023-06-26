@@ -1,5 +1,10 @@
 package main.antlr4.ut.pp.parser;
 
+import Errors.CompilerError;
+import Errors.NameNotFoundError;
+import Errors.RedefinitonError;
+import Errors.TypeError;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ut.pp.*;
@@ -24,40 +29,22 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
-        String name = ctx.getChild(1).getText();
         Attrs attrs = new Attrs();
-
+        String name = ctx.getChild(1).getText();
+        attrs.name = name;
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
             attrs.type = SymbolTable.Type.ERROR;
-            Token start = ctx.start;
-            int lineNr = start.getLine();
-            int columnNr = start.getCharPositionInLine();
-            error_vector.add(new RedefinitonError(lineNr, columnNr, attrs));
-            // System.err.println("Variable " + name + " is already defined in this scope"); // May be rmoved
+
+            RedefinitonError error = new RedefinitonError(ctx, attrs);
+            error_vector.add(error);
+            System.err.println(error.getText());
             return attrs;
         }
-        attrs = visit(ctx.getChild(3));
-
-        // type in RHS case
-        if(attrs.name == null) {
-            attrs.name = name;
-            symbolTable.add(name, attrs.type);
-        }
-        // variable in RHS case
-        else {
-            // Check if variable on RHS exists
-            if(symbolTable.contains(attrs.name)) {
-                symbolTable.add(name, attrs.type);
-            }
-            else {
-                // System.err.println("In \"var " + name + " = " + attrs.name +  "\" \"" + attrs.name + "\" is not defined");
-                attrs.type = SymbolTable.Type.ERROR;
-                return attrs;
-            }
-        }
-        System.out.println("Definition: " + name + " " + attrs.type );
-
+        Attrs RHSattrs = visit(ctx.getChild(3));
+        // type of name is inferred from the RHS
+        attrs.type = RHSattrs.type;
+        symbolTable.add(attrs.name, attrs.type);
         return attrs;
     }
     @Override
@@ -92,14 +79,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs.type = value.type;
 
             System.out.println("Assignment: " + printVariable(attrs));
-            int varCheck = symbolTable.check(name.name, value.type);
-            if (varCheck == 2) {
+            // TODO change this so it uses tables to determine whether an *= or += can be performed
+            if (!are_compatible(name,value)) {
                 attrs.type = SymbolTable.Type.ERROR;
-                Token start = ctx.start;
-                int lineNr = start.getLine();
-                int columnNr = start.getCharPositionInLine();
-                error_vector.add(new TypeError(lineNr, columnNr, attrs));
-                System.err.println("In \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name.name) + ", got " + value.type);
+                TypeError error = new TypeError(ctx, name, value);
+                error_vector.add(error);
+                System.err.println(error.getText());
             }
         }
         return attrs;
@@ -140,32 +125,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
         }
-        else if(ctx.getChildCount() == 3) {
-            // System.out.println("If statement");
-            Attrs LHS = visit(ctx.getChild(0));
-            Attrs RHS = visit(ctx.getChild(2));
-            String name;
-            SymbolTable.Type type;
-
-            if(LHS.name != null) {
-                name = LHS.name;
-                type = RHS.type;
-
-            } else {
-                name = RHS.name;
-                type = LHS.type;
-            }
-            int varCheck = symbolTable.check(name, type);
-            attrs.name = name;
-            attrs.type = type;
-
-            if(varCheck == 1) {
-                System.err.println("In \"if " + printVariable(attrs) + "\" variable \"" + name + "\" is not in scope");
-                attrs.type = SymbolTable.Type.ERROR;
-            } else if (varCheck == 2) {
-                System.err.println("Cannot compare \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name) + ", got " + type);
-                attrs.type = SymbolTable.Type.ERROR;
-            }
+        else{
+            attrs.type = SymbolTable.Type.BOOL;
+            manyOperation(ctx, new Object()); // TODO change object to ENUM OperationType
         }
         return attrs;
     }
@@ -215,6 +177,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
+        else
+        {
+            // TODO update attrs.type if we add floats
+            manyOperation(ctx, new Object());
+        }
         return attrs;
     }
 
@@ -224,14 +191,41 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
+        else
+        {
+            // TODO update attrs.type if we add floats
+            manyOperation(ctx, new Object());
+        }
         return attrs;
     }
 
     @Override
     public Attrs visitPostfix_expr(MyLangParser.Postfix_exprContext ctx) {
         Attrs attrs = new Attrs();
-        if(ctx.children.size() == 1) {
+        int child_count = ctx.getChildCount();
+        if(child_count == 1) {
             attrs = visit(ctx.getChild(0));
+        } else if (child_count == 4)
+        {
+            if (ctx.getChild(1).getText() == "[") // TODO .equals("[") instead of ==
+            {
+                // array-like type, child[0] has to be array-like, so String or array, child[2] has to be int-like
+                Attrs array_like = visit(ctx.getChild(0));
+                if(!is_array_like(array_like))
+                {
+                    TypeError error = new TypeError(ctx, array_like, SymbolTable.Type.ARRAY); // TODO not only array but all arraylike
+                    error_vector.add(error);
+                    System.err.println(error.getText());
+                }
+                Attrs int_like = visit(ctx.getChild(2));
+                if (!is_int_like(int_like))
+                {
+                    // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
+                    TypeError error = new TypeError(ctx, int_like, SymbolTable.Type.INT); // TODO not only array but all arraylike
+                    error_vector.add(error);
+                    System.err.println(error.getText());
+                }
+            }
         }
         return attrs;
     }
@@ -245,11 +239,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             // If identifier not found in all scopes then add new error
             if(!symbolTable.contains(attrs.name))
             {
-                Token start = ctx.start;
-                int lineNr = start.getLine();
-                int columnNr = start.getCharPositionInLine();
-                error_vector.add(new NameNotFoundError(lineNr, columnNr, attrs));
-                System.err.println("Variable: "+ attrs.name + " not found in all scopes!");
+                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                error_vector.add(error);
+                System.err.println(error.getText());
             }
         }
         else if(ctx.getChildCount() == 1) {
@@ -320,4 +312,42 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         return attrs;
     }
+    private SymbolTable.Type getType(Attrs attrs){
+        if (attrs.name != null)
+            return symbolTable.getType(attrs.name);
+        return attrs.type;
+    }
+    private boolean are_compatible(Attrs attr1, Attrs attrs2)
+    {
+        //TODO improve
+        return getType(attr1) == getType(attrs2);
+    }
+    private void manyOperation(ParserRuleContext ctx, Object operationType)
+    {
+        Attrs LHS = visit(ctx.getChild(0));
+        Attrs RHS;
+        for(int i = 2; i < ctx.getChildCount(); i+=2)
+        {
+            RHS = visit(ctx.getChild(i));
+            // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
+            if(!are_compatible(LHS, RHS))
+            {
+                TypeError error = new TypeError(ctx, LHS, RHS);
+                error_vector.add(error);
+                System.err.println(error.getText());
+            }
+            LHS = RHS;
+        }
+    }
+    private boolean is_array_like(Attrs attrs)
+    {
+        // TODO impove;
+        return attrs.type == SymbolTable.Type.ARRAY  || attrs.type == SymbolTable.Type.STRING;
+    }
+    private boolean is_int_like(Attrs attrs)
+    {
+        // TODO impove;
+        return attrs.type == SymbolTable.Type.INT  || attrs.type == SymbolTable.Type.BOOL;
+    }
+
 }
