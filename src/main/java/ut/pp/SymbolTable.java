@@ -1,13 +1,20 @@
 package ut.pp;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-import java.util.Vector;
+import java.util.*;
 
 public class SymbolTable {
 
-    private final Vector<Map<String, Type>> symbolStack;
+    public Var var;
+    private final Vector<Map<String, Var>> symbolStack;
+    public static class Var {
+        public Type type;
+        public ArrayList<String> value;
+        public Var(Type type, ArrayList<String> value) {
+            this.type = type;
+            this.value = value;
+        }
+    }
+
     public SymbolTable()
     {
         symbolStack = new Stack<>();
@@ -18,8 +25,9 @@ public class SymbolTable {
         INT, BOOL, STRING, ARRAY, ERROR
     }
 
+
     public void openScope() {
-        Map<String, Type> newScopeMap = new HashMap<>();
+        Map<String, Var> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);
     }
 
@@ -29,15 +37,15 @@ public class SymbolTable {
         symbolStack.remove(symbolStack.size() - 1);
     }
 
-    public boolean add(String id, Type type) {
-        Map<String, Type> top = symbolStack.lastElement();
+    public boolean add(String id, Var var) {
+        Map<String, Var> top = symbolStack.lastElement();
         if(top.containsKey(id))
         {
             return false;
         }
         else
         {
-            top.put(id, type);
+            top.put(id, var);
             return true;
         }
     }
@@ -47,7 +55,7 @@ public class SymbolTable {
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id) == type)
+                if(symbolStack.get(depth).get(id).type == type)
                     return true;
             }
             depth -= 1;
@@ -55,7 +63,7 @@ public class SymbolTable {
         return false;
     }
 
-    public Type getType(String id) {
+    public Var getType(String id) {
         int depth = symbolStack.size()-1;
         return symbolStack.get(depth).get(id);
     }
@@ -72,7 +80,7 @@ public class SymbolTable {
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id) != type)
+                if(symbolStack.get(depth).get(id).type != type)
                     return 2;
                 return 0;
             }

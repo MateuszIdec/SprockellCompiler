@@ -17,8 +17,9 @@ public class TestParser {
                 "var y = True;";
         String input1 = "{ var x = 5; x = True; var y = [1,2,True]; }" +
                 "x = 10;";
+        String input2 = "for (var x = 5; x < 5; z+=1) { y = 4; }";
 
-        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input1));
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input2));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();

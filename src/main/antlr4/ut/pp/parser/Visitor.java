@@ -1,15 +1,13 @@
 package main.antlr4.ut.pp.parser;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.w3c.dom.Attr;
 import ut.pp.SymbolTable;
 
 import java.util.ArrayList;
 
 public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     SymbolTable symbolTable = new SymbolTable();
-    class Attrs {
+    static class Attrs {
         public String name;
         public String operator;
         public SymbolTable.Type type;
@@ -34,11 +32,12 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         Attrs attrs = visit(ctx.getChild(3));
         attrs.operator = ctx.getChild(2).getText();
         attrs.name = name;
-        symbolTable.add(name, attrs.type);
+
+        symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
+        System.out.println("Definition: " + name + " " + attrs.type + " " + attrs.value);
+
         if(attrs.type == SymbolTable.Type.ERROR) {
             System.err.println("In " + "\"var " + name + " = "+ attrs.value + "\"" + " types don't match");
-        } else {
-            System.out.println("Variable definition: " + name + " " + attrs.type + " " + attrs.value.get(0));
         }
 
         return attrs;
@@ -54,7 +53,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
     String printVariable(Attrs attrs) {
         StringBuilder result = new StringBuilder();
-        result.append("var " + attrs.name + " " + attrs.operator + " " + attrs.value.get(0));
+        result.append(attrs.name + " " + attrs.operator + " " + attrs.value.get(0));
         return result.toString();
     }
     @Override
@@ -75,8 +74,10 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             System.out.println("Assignment: " + printVariable(attrs));
             int varCheck = symbolTable.check(name.name, value.type);
             if(varCheck == 1) {
+                attrs.type = SymbolTable.Type.ERROR;
 					System.err.println("In \"" + printVariable(attrs) + "\" variable \"" + name.name + "\" is not in scope");
 				} else if (varCheck == 2) {
+                    attrs.type = SymbolTable.Type.ERROR;
 					System.err.println("In \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name.name) + ", got " + value.type);
 				}
         }
@@ -210,8 +211,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
             attrs.value.add(childAttrs.value.get(0));
         }
-        System.out.println("Array assignment " + attrs.value);
         return attrs;
     }
-
 }
