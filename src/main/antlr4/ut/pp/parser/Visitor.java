@@ -28,9 +28,21 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         String name = ctx.getChild(1).getText();
-        Attrs attrs = visit(ctx.getChild(3));
+        Attrs attrs = new Attrs();
+
+        // Check if variable is already defined in local scope
+        if(!symbolTable.checkLocalScope(name)) {
+            System.err.println("Variable " + name + " is already defined in this scope");
+            attrs.type = SymbolTable.Type.ERROR;
+            return attrs;
+        }
+
+        attrs = visit(ctx.getChild(3));
         attrs.operator = ctx.getChild(2).getText();
         attrs.name = name;
+
+
+        // If on the RHS there is another variable we check if it exists in current scope or in outer scopes
 
         symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
         System.out.println("Definition: " + name + " " + attrs.type + " " + attrs.value);
@@ -192,6 +204,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         return attrs;
     }
 
+    //TODO: Check if the variable exists in current or outer scope (used in var x = a;)
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
         Attrs attrs = new Attrs();
@@ -222,7 +235,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
     @Override
     public Attrs visitCompound_statement(MyLangParser.Compound_statementContext ctx) {
-        return super.visitCompound_statement(ctx);
+        return visit(ctx.getChild(0));
     }
 
     @Override
@@ -232,7 +245,11 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
     @Override
     public Attrs visitStatement(MyLangParser.StatementContext ctx) {
-        return visit(ctx.getChild(0));
+        Attrs attrs = visit(ctx.getChild(0));
+        if(attrs != null)
+            System.out.println("Statement: " + attrs.type);
+
+        return attrs;
     }
 
     @Override
@@ -244,6 +261,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
         return visit(ctx.getChild(1));
     }
+    //TODO: Move type checking to visitArray
     @Override
     public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
         Attrs attrs = new Attrs();
@@ -256,8 +274,11 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             if(ctx.getChild(x).getText().equals(","))
                 x++;
             childAttrs = visit(ctx.getChild(x));
-            if(type != childAttrs.type)
+            if(type != childAttrs.type) {
+                System.out.println("Error in args");
                 attrs.type = SymbolTable.Type.ERROR;
+
+            }
 
             attrs.value.add(childAttrs.value.get(0));
         }

@@ -70,7 +70,7 @@ public class SymbolTable {
     /**
      * Perform scope and type checking on a variable
      * @return
-     * <p> 0 - variable in scope with matching type</p>
+     * <p> 0 - variable in scope with matching type </p>
      * <p> 1 - not in scope </p>
      * <p> 2 - type mismatch </p>
      */
@@ -89,4 +89,11 @@ public class SymbolTable {
         return 1;
     }
 
+    /**
+     * Check if variable is in current scope
+     */
+    public boolean checkLocalScope(String id) {
+        int depth = symbolStack.size()-1;
+        return symbolStack.get(depth).containsKey(id);
+    }
 }
