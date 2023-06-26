@@ -3,18 +3,7 @@ package ut.pp;
 import java.util.*;
 
 public class SymbolTable {
-
-    public Var var;
-    private final Vector<Map<String, Var>> symbolStack;
-    public static class Var {
-        public Type type;
-        public ArrayList<String> value;
-        public Var(Type type, ArrayList<String> value) {
-            this.type = type;
-            this.value = value;
-        }
-    }
-
+    private final Vector<Map<String, Type>> symbolStack;
     public SymbolTable()
     {
         symbolStack = new Stack<>();
@@ -27,7 +16,7 @@ public class SymbolTable {
 
 
     public void openScope() {
-        Map<String, Var> newScopeMap = new HashMap<>();
+        Map<String, Type> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);
     }
 
@@ -37,15 +26,15 @@ public class SymbolTable {
         symbolStack.remove(symbolStack.size() - 1);
     }
 
-    public boolean add(String id, Var var) {
-        Map<String, Var> top = symbolStack.lastElement();
+    public boolean add(String id, Type type) {
+        Map<String, Type> top = symbolStack.lastElement();
         if(top.containsKey(id))
         {
             return false;
         }
         else
         {
-            top.put(id, var);
+            top.put(id, type);
             return true;
         }
     }
@@ -67,11 +56,7 @@ public class SymbolTable {
 
     public Type getType (String id) {
         int depth = symbolStack.size()-1;
-        return symbolStack.get(depth).get(id).type;
-    }
-    public ArrayList<String> getValue (String id) {
-        int depth = symbolStack.size()-1;
-        return symbolStack.get(depth).get(id).value;
+        return symbolStack.get(depth).get(id);
     }
     /**
      * Perform scope and type checking on a variable
@@ -86,7 +71,7 @@ public class SymbolTable {
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id).type != type)
+                if(symbolStack.get(depth).get(id) != type)
                     return 2;
                 return 0;
             }

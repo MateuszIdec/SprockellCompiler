@@ -1,20 +1,14 @@
 package main.antlr4.ut.pp.parser;
 
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import ut.pp.SymbolTable;
+import ut.pp.*;
 
-import javax.swing.plaf.SeparatorUI;
-import java.util.ArrayList;
+import java.util.Vector;
 
-public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
-    SymbolTable symbolTable = new SymbolTable();
-    //TODO: Think if we need operator and ArrayList for values. Right now we only use it in errors.
-    static class Attrs {
-        public String name;
-        public String operator;
-        public SymbolTable.Type type;
-        public ArrayList <String> value = new ArrayList<>();
-    }
+public class Visitor extends MyLangBaseVisitor <Attrs> {
+    public Vector<CompilerError> error_vector = new Vector<>();
+    public SymbolTable symbolTable = new SymbolTable();
 
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
@@ -28,7 +22,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         System.out.println("Exiting scope ");
         return null;
     }
-
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         String name = ctx.getChild(1).getText();
@@ -36,32 +29,34 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
 
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
-            System.err.println("Variable " + name + " is already defined in this scope");
             attrs.type = SymbolTable.Type.ERROR;
+            Token start = ctx.start;
+            int lineNr = start.getLine();
+            int columnNr = start.getCharPositionInLine();
+            error_vector.add(new RedefinitonError(lineNr, columnNr, attrs));
+            // System.err.println("Variable " + name + " is already defined in this scope"); // May be rmoved
             return attrs;
         }
         attrs = visit(ctx.getChild(3));
 
         // type in RHS case
         if(attrs.name == null) {
-            attrs.operator = ctx.getChild(2).getText();
             attrs.name = name;
-            symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
+            symbolTable.add(name, attrs.type);
         }
         // variable in RHS case
         else {
             // Check if variable on RHS exists
             if(symbolTable.contains(attrs.name)) {
-                attrs.value = symbolTable.getValue(attrs.name);
-                symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
+                symbolTable.add(name, attrs.type);
             }
             else {
-                System.err.println("In \"var " + name + " = " + attrs.name +  "\" \"" + attrs.name + "\" is not defined");
+                // System.err.println("In \"var " + name + " = " + attrs.name +  "\" \"" + attrs.name + "\" is not defined");
                 attrs.type = SymbolTable.Type.ERROR;
                 return attrs;
             }
         }
-        System.out.println("Definition: " + name + " " + attrs.type + " " + attrs.value);
+        System.out.println("Definition: " + name + " " + attrs.type );
 
         return attrs;
     }
@@ -80,7 +75,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     }
 
     String printVariable(Attrs attrs) {
-        return attrs.name + " " + attrs.operator + " " + attrs.value.get(0);
+        return attrs.name + " ";
     }
 
     @Override
@@ -91,23 +86,21 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         }
         else if(ctx.getChildCount() == 3) {
             Attrs name = visit(ctx.getChild(0));
-            Attrs operator = visit(ctx.getChild(1));
             Attrs value = visit(ctx.getChild(2));
 
             attrs.name = name.name;
             attrs.type = value.type;
-            attrs.value = value.value;
-            attrs.operator = operator.operator;
 
             System.out.println("Assignment: " + printVariable(attrs));
             int varCheck = symbolTable.check(name.name, value.type);
-            if(varCheck == 1) {
+            if (varCheck == 2) {
                 attrs.type = SymbolTable.Type.ERROR;
-					System.err.println("In \"" + printVariable(attrs) + "\" variable \"" + name.name + "\" is not in scope");
-				} else if (varCheck == 2) {
-                    attrs.type = SymbolTable.Type.ERROR;
-					System.err.println("In \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name.name) + ", got " + value.type);
-				}
+                Token start = ctx.start;
+                int lineNr = start.getLine();
+                int columnNr = start.getCharPositionInLine();
+                error_vector.add(new TypeError(lineNr, columnNr, attrs));
+                System.err.println("In \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name.name) + ", got " + value.type);
+            }
         }
         return attrs;
     }
@@ -115,15 +108,16 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitAssignment_operator(MyLangParser.Assignment_operatorContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.operator = ctx.getText();
         return attrs;
     }
 
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        if(ctx.children.size() == 1) {
-            attrs = visit(ctx.getChild(0));
+        for (int i = 0; i < ctx.children.size(); i++){
+            attrs = visit(ctx.getChild(i));
+            if(attrs.name != null)
+                break;
         }
         return attrs;
     }
@@ -131,8 +125,10 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitLogical_and_expression(MyLangParser.Logical_and_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        if(ctx.children.size() == 1) {
-            attrs = visit(ctx.getChild(0));
+        for (int i = 0; i < ctx.children.size(); i++){
+            attrs = visit(ctx.getChild(i));
+            if(attrs.name == null)
+                break;
         }
         return attrs;
     }
@@ -145,29 +141,23 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             attrs = visit(ctx.getChild(0));
         }
         else if(ctx.getChildCount() == 3) {
-            System.out.println("If statement");
+            // System.out.println("If statement");
             Attrs LHS = visit(ctx.getChild(0));
-            Attrs operator = visit(ctx.getChild(1));
             Attrs RHS = visit(ctx.getChild(2));
             String name;
-            ArrayList value;
             SymbolTable.Type type;
 
             if(LHS.name != null) {
                 name = LHS.name;
                 type = RHS.type;
-                value = RHS.value;
 
             } else {
                 name = RHS.name;
                 type = LHS.type;
-                value = RHS.value;
             }
             int varCheck = symbolTable.check(name, type);
             attrs.name = name;
             attrs.type = type;
-            attrs.value = value;
-            attrs.operator = operator.operator;
 
             if(varCheck == 1) {
                 System.err.println("In \"if " + printVariable(attrs) + "\" variable \"" + name + "\" is not in scope");
@@ -188,13 +178,18 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             Attrs expression = visit(ctx.getChild(1));
             Attrs compoundStatement = visit(ctx.getChild(2));
             attrs.type = SymbolTable.Type.BOOL;
-            attrs.value = expression.value;
         }
         // Visit all else/ elif stateents
         else {
             for(int x = 3; x < ctx.getChildCount(); x++)
                 visit(ctx.getChild(x));
         }
+//        for(int i = 0; i < ctx.getChildCount(); i +=2)
+//        {
+//            Attrs LHS = visit(ctx.getChild(0));
+//            Attrs operator = visit(ctx.getChild(1));
+//            Attrs RHS = visit(ctx.getChild(2));
+//        }
         return attrs;
     }
 
@@ -211,7 +206,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitRelational_operator(MyLangParser.Relational_operatorContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.operator = ctx.getText();
         return attrs;
     }
 
@@ -247,6 +241,16 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         Attrs attrs = new Attrs();
         if(ctx.IDENTIFIER() != null) {
             attrs.name = ctx.getText();
+
+            // If identifier not found in all scopes then add new error
+            if(!symbolTable.contains(attrs.name))
+            {
+                Token start = ctx.start;
+                int lineNr = start.getLine();
+                int columnNr = start.getCharPositionInLine();
+                error_vector.add(new NameNotFoundError(lineNr, columnNr, attrs));
+                System.err.println("Variable: "+ attrs.name + " not found in all scopes!");
+            }
         }
         else if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
@@ -260,7 +264,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.value.add(ctx.getText());
 
         if(ctx.INT() != null) {
             attrs.type = SymbolTable.Type.INT;
@@ -305,7 +308,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(0));
         SymbolTable.Type type = childAttrs.type;
-        attrs.value.add(childAttrs.value.get(0));
 
         for(int x = 1; x < ctx.getChildCount(); x++) {
             if(ctx.getChild(x).getText().equals(","))
@@ -315,7 +317,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
                 attrs.type = SymbolTable.Type.ERROR;
 
             }
-            attrs.value.add(childAttrs.value.get(0));
         }
         return attrs;
     }
