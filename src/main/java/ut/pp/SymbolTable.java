@@ -50,13 +50,15 @@ public class SymbolTable {
         }
     }
 
-    public boolean contains(String id, Type type) {
+    /**
+     * Check if variable exists in current or outer scope
+     */
+    public boolean contains(String id) {
         int depth = symbolStack.size()-1;
         while(depth >= 0)
         {
             if(symbolStack.get(depth).containsKey(id)) {
-                if(symbolStack.get(depth).get(id).type == type)
-                    return true;
+               return true;
             }
             depth -= 1;
         }
