@@ -3,9 +3,8 @@ package main.antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ut.pp.SymbolTable;
 
-import java.lang.reflect.Array;
+import javax.swing.plaf.SeparatorUI;
 import java.util.ArrayList;
-import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     SymbolTable symbolTable = new SymbolTable();
@@ -47,6 +46,7 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         if(attrs.name == null) {
             attrs.operator = ctx.getChild(2).getText();
             attrs.name = name;
+            symbolTable.add(name, new SymbolTable.Var(attrs.type, attrs.value));
         }
         // variable in RHS case
         else {
@@ -62,12 +62,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
             }
         }
         System.out.println("Definition: " + name + " " + attrs.type + " " + attrs.value);
-
-
-
-        // If on the RHS there is another variable we check if it exists in current scope or in outer scopes
-
-      ;
 
         return attrs;
     }
@@ -94,7 +88,8 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
-        } else if(ctx.getChildCount() == 3) {
+        }
+        else if(ctx.getChildCount() == 3) {
             Attrs name = visit(ctx.getChild(0));
             Attrs operator = visit(ctx.getChild(1));
             Attrs value = visit(ctx.getChild(2));
@@ -145,9 +140,11 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs = new Attrs();
+
         if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
-        } else if(ctx.getChildCount() == 3) {
+        }
+        else if(ctx.getChildCount() == 3) {
             System.out.println("If statement");
             Attrs LHS = visit(ctx.getChild(0));
             Attrs operator = visit(ctx.getChild(1));
@@ -179,7 +176,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
                 System.err.println("Cannot compare \"" + printVariable(attrs) + "\" expected " + symbolTable.getType(name) + ", got " + type);
                 attrs.type = SymbolTable.Type.ERROR;
             }
-
         }
         return attrs;
     }
@@ -187,11 +183,29 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
         Attrs attrs = new Attrs();
-        Attrs expression = visit(ctx.getChild(1));
-        Attrs compoundStatement = visit(ctx.getChild(2));
-        attrs.type = SymbolTable.Type.BOOL;
-        attrs.value = expression.value;
+        // Check if there is elif or else
+        if(ctx.getChildCount() == 3) {
+            Attrs expression = visit(ctx.getChild(1));
+            Attrs compoundStatement = visit(ctx.getChild(2));
+            attrs.type = SymbolTable.Type.BOOL;
+            attrs.value = expression.value;
+        }
+        // Visit all else/ elif stateents
+        else {
+            for(int x = 3; x < ctx.getChildCount(); x++)
+                visit(ctx.getChild(x));
+        }
         return attrs;
+    }
+
+    @Override
+    public Attrs visitElse_part(MyLangParser.Else_partContext ctx) {
+        return visit(ctx.getChild(1));
+    }
+
+    @Override
+    public Attrs visitElif_part(MyLangParser.Elif_partContext ctx) {
+        return null;
     }
 
     @Override
@@ -289,7 +303,6 @@ public class Visitor extends MyLangBaseVisitor <Visitor.Attrs> {
     @Override
     public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
         Attrs attrs = new Attrs();
-
         Attrs childAttrs = visit(ctx.getChild(0));
         SymbolTable.Type type = childAttrs.type;
         attrs.value.add(childAttrs.value.get(0));
