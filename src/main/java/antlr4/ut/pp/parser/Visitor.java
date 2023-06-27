@@ -392,12 +392,36 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
-        return super.visitJoin_statement(ctx);
+        Attrs fork = visit(ctx.getChild(1));
+        if(getType(fork) != SymbolTable.Type.FORK)
+        {
+            TypeError error = new TypeError(ctx, fork, SymbolTable.Type.FORK);
+            System.err.println(error.getText());
+            error_vector.add(error);
+        }
+        return fork;
     }
 
     @Override
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
-        return super.visitLock_statement(ctx);
+        Attrs attrs = new Attrs();
+        if(ctx.IDENTIFIER() != null) {
+            attrs.name = ctx.getText();
+            // If identifier not found in all scopes then add new error
+            if(!symbolTable.contains(attrs.name))
+            {
+                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                error_vector.add(error);
+                System.err.println(error.getText());
+            }
+        }
+        if(getType(attrs) != SymbolTable.Type.FORK)
+        {
+            TypeError error = new TypeError(ctx, attrs, SymbolTable.Type.FORK);
+            System.err.println(error.getText());
+            error_vector.add(error);
+        }
+        return attrs;
     }
 
     private SymbolTable.Type getType(Attrs attrs){
