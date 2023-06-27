@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SprockellCompiler/src/main/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package main.antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -186,7 +186,14 @@ public class MyLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPar_statement(MyLangParser.Par_statementContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFork_expression(MyLangParser.Fork_expressionContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitJoin_statement(MyLangParser.Join_statementContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
