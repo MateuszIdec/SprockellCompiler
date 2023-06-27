@@ -24,9 +24,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
-        String name = ctx.getChild(1).getText();
-        Attrs attrs = new Attrs();
+        int sharedVarCase = 0;
 
+        if(ctx.getChild(0).getText().equals("shared")) {
+            sharedVarCase = 1;
+        }
+
+        String name = ctx.getChild(1 + sharedVarCase).getText();
+        Attrs attrs = new Attrs();
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
             attrs.type = SymbolTable.Type.ERROR;
@@ -37,7 +42,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             // System.err.println("Variable " + name + " is already defined in this scope"); // May be rmoved
             return attrs;
         }
-        attrs = visit(ctx.getChild(3));
+        attrs = visit(ctx.getChild(3 + sharedVarCase));
 
         // type in RHS case
         if(attrs.name == null) {
@@ -56,8 +61,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 return attrs;
             }
         }
-        System.out.println("Definition: " + name + " " + attrs.type );
 
+        System.out.print("Definition: " + name + " " + attrs.type );
+        if(sharedVarCase == 0)
+            System.out.println();
+        else
+            System.out.println(" SHARED");
         return attrs;
     }
     @Override
@@ -318,6 +327,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
             }
         }
+        attrs.type = type;
         return attrs;
     }
 }
