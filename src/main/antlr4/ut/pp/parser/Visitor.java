@@ -29,9 +29,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
+        int sharedVarCase = 0;
+
+        if(ctx.getChild(0).getText().equals("shared")) {
+            sharedVarCase = 1;
+        }
+
+        String name = ctx.getChild(1 + sharedVarCase).getText();
         Attrs attrs = new Attrs();
-        String name = ctx.getChild(1).getText();
-        attrs.name = name;
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
             attrs.type = SymbolTable.Type.ERROR;
