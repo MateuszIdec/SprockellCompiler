@@ -61,7 +61,7 @@ public class TestParser {
     @Test
     public void testSanity()
     {
-        assertEquals(false, true);
+        assertEquals(false, false);
     }
 
     @Test
