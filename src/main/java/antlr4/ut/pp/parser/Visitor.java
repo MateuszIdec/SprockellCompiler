@@ -382,6 +382,24 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return super.visitReturn_statement(ctx);
     }
 
+    @Override
+    public Attrs visitFork_expression(MyLangParser.Fork_expressionContext ctx) {
+        Attrs attrs = new Attrs();
+        visit(ctx.getChild(1));
+        attrs.type = SymbolTable.Type.FORK;
+        return attrs;
+    }
+
+    @Override
+    public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
+        return super.visitJoin_statement(ctx);
+    }
+
+    @Override
+    public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
+        return super.visitLock_statement(ctx);
+    }
+
     private SymbolTable.Type getType(Attrs attrs){
         if (attrs.name != null)
             return symbolTable.getType(attrs.name);

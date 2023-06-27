@@ -11,7 +11,7 @@ public class SymbolTable {
     }
 
     public enum Type {
-        INT, BOOL, STRING, ARRAY, ERROR
+        INT, BOOL, STRING, ARRAY, FORK, ERROR
     }
 
     public void openScope() {
