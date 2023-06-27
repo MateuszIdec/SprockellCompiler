@@ -3,7 +3,7 @@ grammar MyLang;
 
 module: body;
 
-statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement);
+statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement | par_statement | lock_statement);
 body: statement+;
 compound_statement: '{' body '}';
 
@@ -36,7 +36,7 @@ else_part: 'else' body;
 definition_statement: var_def | func_def;
 
 func_def: 'fn' IDENTIFIER '(' parameters ')' '{' body '}';
-var_def: VAR IDENTIFIER '=' expression ';' ;
+var_def: (VAR SHARED?) IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';' ;
 
@@ -48,8 +48,13 @@ parameters: (parameter (',' parameter)*);
 parameter: VAR IDENTIFIER;
 args: (expression (',' expression)*)?;
 
+
 VAR: 'var';
+SHARED: 'shared';
 BOOL: 'True' | 'False';
+PAR: 'par';
+LOCK: 'lock';
+UNLOCK: 'unlock';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | ([1-9] [0-9]*);
@@ -58,4 +63,6 @@ ESCAPE_SEQUENCE: '\\"';
 
 COMMENT : '//' (~('\n'))* -> skip;
 WS : [ \n\t\r]+ -> skip;
+
+
 
