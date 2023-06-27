@@ -3,13 +3,13 @@ grammar MyLang;
 
 module: body;
 
-statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement | print_statement | lock_statement);
+statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement | print_statement | lock_statement | join_statement | fork_expression);
 body: statement+;
 compound_statement: '{' body '}';
 
 expression_statement: expression? ';';
 
-expression: assignment_expr;
+expression: assignment_expr | fork_expression;
 assignment_expr: postfix_expr assignment_operator logical_and_expression | logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
 logical_and_expression: relational_expr ('&&' relational_expr)*;
@@ -33,7 +33,9 @@ if_statement : 'if'  expression compound_statement elif_part* else_part?;
 elif_part: 'elif' expression compound_statement;
 else_part: 'else' compound_statement;
 
-par_statement: PAR compound_statement;
+fork_expression: FORK compound_statement;
+join_statement: JOIN expression;
+
 lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
 
 definition_statement: var_def | func_def;
@@ -49,13 +51,13 @@ compound_type: array | STRING;
 array: '[' args ']';
 
 parameters: (parameter (',' parameter)*)?;
-parameter: VAR IDENTIFIER;
+parameter: 'var' IDENTIFIER;
 args: (expression (',' expression)*)?;
 
-//VAR: 'var';
 //SHARED: 'shared';
 BOOL: 'True' | 'False';
-PAR: 'par';
+FORK: 'fork';
+JOIN: 'join';
 LOCK: 'lock';
 UNLOCK: 'unlock';
 SHARED: 'shared';
