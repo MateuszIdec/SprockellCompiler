@@ -1,5 +1,5 @@
-// Generated from C:/Programming/SprockellCompiler/src/main/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
-package main.antlr4.ut.pp.parser;
+// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
+package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**

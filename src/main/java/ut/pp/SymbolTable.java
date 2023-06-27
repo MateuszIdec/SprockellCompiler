@@ -14,7 +14,6 @@ public class SymbolTable {
         INT, BOOL, STRING, ARRAY, ERROR
     }
 
-
     public void openScope() {
         Map<String, Type> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);

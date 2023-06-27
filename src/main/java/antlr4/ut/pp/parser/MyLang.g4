@@ -1,5 +1,5 @@
 grammar MyLang;
-@header {package main.antlr4.ut.pp.parser;}
+@header {package antlr4.ut.pp.parser;}
 
 module: body;
 

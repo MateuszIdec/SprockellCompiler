@@ -1,6 +1,6 @@
 package Errors;
 
-import main.antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import ut.pp.Attrs;

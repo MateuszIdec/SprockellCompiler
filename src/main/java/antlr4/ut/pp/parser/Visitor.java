@@ -1,4 +1,4 @@
-package main.antlr4.ut.pp.parser;
+package antlr4.ut.pp.parser;
 
 import Errors.CompilerError;
 import Errors.NameNotFoundError;

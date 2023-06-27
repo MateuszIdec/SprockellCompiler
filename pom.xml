@@ -6,8 +6,8 @@
     -->
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ut.pp.myGroupId</groupId>
-    <artifactId>MyLang</artifactId>
+    <groupId>ut.pp</groupId>
+    <artifactId>SprockellCompiler</artifactId>
     <version>1</version>
 
     <dependencies>
