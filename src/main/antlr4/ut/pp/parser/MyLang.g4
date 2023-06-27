@@ -36,7 +36,7 @@ else_part: 'else' body;
 definition_statement: var_def | func_def;
 
 func_def: 'fn' IDENTIFIER '(' parameters ')' '{' body '}';
-var_def: (VAR SHARED?) IDENTIFIER '=' expression ';' ;
+var_def: (SHARED? VAR) IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';' ;
 
