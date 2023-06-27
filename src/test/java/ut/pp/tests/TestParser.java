@@ -22,7 +22,7 @@ public class TestParser {
         String input2 = "for (var x = 5; x < 5; z+=1) { y = 4; }";
         String input3 = "var x = 2; if x == 2 { y = 3;}";
 
-        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input3));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
