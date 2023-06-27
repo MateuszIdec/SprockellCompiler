@@ -1,0 +1,8 @@
+shared var x = 3;
+
+par
+{
+lock x;
+x += 1;
+unlock x;
+}
