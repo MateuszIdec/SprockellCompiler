@@ -25,13 +25,15 @@ additive_operator: '+' | '-';
 multi_operator: '*';
 
 iteration_statement: while_statement | for_statement;
-while_statement : 'while' expression body;
-for_statement: 'for (' expression ';' expression ';' expression ')' compound_statement;
+while_statement : 'while' expression compound_statement;
+for_statement: 'for (' ((expression ';') | (var_def)) expression ';' expression ')' compound_statement;
 
-if_statement : 'if'  expression body elif_part* else_part?;
-elif_part: 'elif' expression body;
-else_part: 'else' body;
+if_statement : 'if'  expression compound_statement elif_part* else_part?;
+elif_part: 'elif' expression compound_statement;
+else_part: 'else' compound_statement;
 
+par_statement: PAR compound_statement;
+lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
 
 definition_statement: var_def | func_def;
 
