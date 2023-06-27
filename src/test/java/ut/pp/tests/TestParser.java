@@ -32,6 +32,19 @@ public class TestParser {
         assertEquals(1, tree.getChildCount()); // 1 for Hello, 1 for EOF
     }
     @Test
+    public void testSimplestExpression_statement()
+    {
+        String input = ";";
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
+        CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
+        MyLangParser parser = new MyLangParser(tokens);
+        ParseTree tree = parser.module();
+
+        Visitor visitor = new Visitor();
+        visitor.visit(tree);
+        assertEquals(0, visitor.error_vector.size());
+    }
+    @Test
     public void testVariableDefinitionSyntaxIncomplete()
     {
         String input = "var x = 0 {}";

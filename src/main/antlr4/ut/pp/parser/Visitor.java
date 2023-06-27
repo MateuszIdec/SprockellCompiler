@@ -54,19 +54,18 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
-        Attrs attrs = new Attrs();
-        if(ctx.children.size() == 1) {
-            attrs = visit(ctx.getChild(0));
-        }
-        return attrs;
+        return visit(ctx.getChild(0));
     }
 
     @Override
     public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
-        return visit(ctx.getChild(0));
+        if(ctx.getChildCount()==1)
+            return visit(ctx.getChild(0));
+        else
+            return new Attrs();
     }
 
-    String printVariable(Attrs attrs) {
+    private String printVariable(Attrs attrs) {
         return attrs.name + " ";
     }
 
@@ -103,6 +102,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
+        // TODO: something wrong here
         Attrs attrs = new Attrs();
         for (int i = 0; i < ctx.children.size(); i++){
             attrs = visit(ctx.getChild(i));
@@ -114,6 +114,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLogical_and_expression(MyLangParser.Logical_and_expressionContext ctx) {
+        // TODO: something wrong here
         Attrs attrs = new Attrs();
         for (int i = 0; i < ctx.children.size(); i++){
             attrs = visit(ctx.getChild(i));
@@ -139,34 +140,34 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
+        // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
         // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
             Attrs expression = visit(ctx.getChild(1));
             Attrs compoundStatement = visit(ctx.getChild(2));
-            attrs.type = SymbolTable.Type.BOOL;
+            attrs.type = SymbolTable.Type.BOOL; // TODO why? If not usable then include in for loop
         }
         // Visit all else/ elif stateents
         else {
+            // TODO close scope
             for(int x = 3; x < ctx.getChildCount(); x++)
                 visit(ctx.getChild(x));
         }
-//        for(int i = 0; i < ctx.getChildCount(); i +=2)
-//        {
-//            Attrs LHS = visit(ctx.getChild(0));
-//            Attrs operator = visit(ctx.getChild(1));
-//            Attrs RHS = visit(ctx.getChild(2));
-//        }
+
         return attrs;
     }
 
     @Override
     public Attrs visitElse_part(MyLangParser.Else_partContext ctx) {
+        // TODO open and close scope
         return visit(ctx.getChild(1));
     }
 
     @Override
     public Attrs visitElif_part(MyLangParser.Elif_partContext ctx) {
+
+        // TODO first determine what should be in if_statement, open and close scope
         return null;
     }
 
@@ -282,6 +283,34 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
     @Override
+    public Attrs visitFunc_def(MyLangParser.Func_defContext ctx) {
+        // TODO add name to symbolTable
+        symbolTable.openScope();
+        Attrs name = visit(ctx.getChild(1));
+        Attrs pars = visit(ctx.getChild(3));
+        Attrs body = visit(ctx.getChild(6));
+        symbolTable.closeScope();
+        return new Attrs();
+    }
+
+    @Override
+    public Attrs visitParameters(MyLangParser.ParametersContext ctx) {
+        for(int i = 0; i < ctx.getChildCount();i+=2)
+        {
+            visit(ctx.getChild(i));
+        }
+        return new Attrs();
+    }
+
+    @Override
+    public Attrs visitParameter(MyLangParser.ParameterContext ctx) {
+        // TODO how to determine type of variable before function call?
+        symbolTable.add(ctx.getText(), null);
+        return new Attrs();
+    }
+
+
+    @Override
     public Attrs visitStatement(MyLangParser.StatementContext ctx) {
         Attrs attrs = visit(ctx.getChild(0));
         return attrs;
@@ -289,9 +318,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitCompound_type(MyLangParser.Compound_typeContext ctx) {
+        // TODO what about array?
         Attrs attrs = new Attrs();
         if(ctx.STRING() != null)
-            attrs.type = SymbolTable.Type.STRING;
+            attrs.type = SymbolTable.Type.STRING; // why you build attr if it is not returned?
         return visit(ctx.getChild(0));
     }
 
@@ -302,6 +332,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
+        // TODO move the responsibility of checking if the same type to visit array
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(0));
         SymbolTable.Type type = childAttrs.type;
@@ -317,6 +348,25 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         return attrs;
     }
+
+
+    @Override
+    public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
+        // TODO check what attributes should be in if statement, maybe visit while, for and if just for code gen?
+        return super.visitWhile_statement(ctx);
+    }
+
+    @Override
+    public Attrs visitFor_statement(MyLangParser.For_statementContext ctx) {
+        return super.visitFor_statement(ctx);
+    }
+
+    @Override
+    public Attrs visitReturn_statement(MyLangParser.Return_statementContext ctx) {
+        // TODO what  to return? Code generation for sure.
+        return super.visitReturn_statement(ctx);
+    }
+
     private SymbolTable.Type getType(Attrs attrs){
         if (attrs.name != null)
             return symbolTable.getType(attrs.name);
@@ -356,3 +406,4 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
 }
+// Dont forget to regenerate ANTLR grammar

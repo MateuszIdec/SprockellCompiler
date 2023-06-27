@@ -24,6 +24,7 @@ relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
 additive_operator: '+' | '-';
 multi_operator: '*';
 
+// Maybe we should add break and continue keywords (statements, return break and continue are jump statements)
 iteration_statement: while_statement | for_statement;
 while_statement : 'while' expression compound_statement;
 for_statement: 'for (' ((expression ';') | (var_def)) expression ';' expression ')' compound_statement;
@@ -47,7 +48,7 @@ primitive_type: INT | BOOL;
 compound_type: array | STRING;
 array: '[' args ']';
 
-parameters: (parameter (',' parameter)*);
+parameters: (parameter (',' parameter)*)?;
 parameter: VAR IDENTIFIER;
 args: (expression (',' expression)*)?;
 
