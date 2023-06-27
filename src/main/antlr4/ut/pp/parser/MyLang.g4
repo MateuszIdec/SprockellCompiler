@@ -3,7 +3,7 @@ grammar MyLang;
 
 module: body;
 
-statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement | print_statement | lock_statement | join_statement | fork_expression);
+statement: (definition_statement | compound_statement | expression_statement | iteration_statement | if_statement | return_statement | print_statement | lock_statement | join_statement);
 body: statement+;
 compound_statement: '{' body '}';
 

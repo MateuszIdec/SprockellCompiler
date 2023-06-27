@@ -17,13 +17,17 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
+        boolean is_parent_for_loop = false;
+//        if(ctx.getParent().getParent() instanceof MyLangParser.For_statementContext)
+//            is_parent_for_loop = true;
         System.out.println("Entering scope");
-        symbolTable.openScope();
+        if(!is_parent_for_loop)
+            symbolTable.openScope();
 
-        for (ParseTree child : ctx.children) {
-            visit(child);
-        }
-        symbolTable.closeScope();
+        for (int i = 0 ; i< ctx.getChildCount();i++)
+            visit(ctx.getChild(i));
+        if(!is_parent_for_loop)
+            symbolTable.closeScope();
         System.out.println("Exiting scope ");
         return null;
     }
@@ -49,7 +53,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs RHSattrs = visit(ctx.getChild(3+ sharedVarCase));
         // type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
+        attrs.name = name;
         symbolTable.add(attrs.name, attrs.type);
+        System.out.println("New variable defined:" + attrs.name);
         return attrs;
     }
     @Override
@@ -59,7 +65,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
-        if(ctx.getChildCount()==1)
+        if(ctx.getChildCount()==2)
             return visit(ctx.getChild(0));
         else
             return new Attrs();
@@ -72,7 +78,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
         Attrs attrs = new Attrs();
+        System.out.println("Now in assignment expr," + ctx.getText());
         if(ctx.getChildCount() == 1) {
+            System.out.println("Assignment: Single child!" + ctx.getText());
+
             attrs = visit(ctx.getChild(0));
         }
         else if(ctx.getChildCount() == 3) {
@@ -358,7 +367,13 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitFor_statement(MyLangParser.For_statementContext ctx) {
-        return super.visitFor_statement(ctx);
+        symbolTable.openScope();
+        for(int i = 0; i < ctx.getChildCount(); i++)
+        {
+            visit(ctx.getChild(i));
+        }
+        symbolTable.closeScope();
+        return new Attrs();
     }
 
     @Override
