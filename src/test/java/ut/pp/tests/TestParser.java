@@ -9,6 +9,7 @@ import antlr4.ut.pp.parser.Visitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.Assert;
 import org.junit.Test;
 import Errors.NameNotFoundError;
 import Errors.TypeError;
@@ -57,7 +58,11 @@ public class TestParser {
         visitor.visit(tree);
         // TODO Properly test this. ASK TA
     }
-
+    @Test
+    public void testSanity()
+    {
+        assertEquals(false, true);
+    }
 
     @Test
     public void testJustVeriableDef()
@@ -242,6 +247,14 @@ public class TestParser {
         Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
+    }
+    @Test
+    public void testFork() {
+        String input = "var x = fork {var y = 0;};";
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
+        CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
+        MyLangParser parser = new MyLangParser(tokens);
+        ParseTree tree = parser.module();
     }
 
 }
