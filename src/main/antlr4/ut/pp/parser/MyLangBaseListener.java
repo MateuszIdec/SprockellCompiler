@@ -305,13 +305,25 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPar_statement(MyLangParser.Par_statementContext ctx) { }
+	@Override public void enterFork_expression(MyLangParser.Fork_expressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitPar_statement(MyLangParser.Par_statementContext ctx) { }
+	@Override public void exitFork_expression(MyLangParser.Fork_expressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJoin_statement(MyLangParser.Join_statementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJoin_statement(MyLangParser.Join_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

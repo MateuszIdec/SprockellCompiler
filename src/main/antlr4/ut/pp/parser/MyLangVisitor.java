@@ -155,11 +155,17 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitElse_part(MyLangParser.Else_partContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#par_statement}.
+	 * Visit a parse tree produced by {@link MyLangParser#fork_expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitPar_statement(MyLangParser.Par_statementContext ctx);
+	T visitFork_expression(MyLangParser.Fork_expressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MyLangParser#join_statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitJoin_statement(MyLangParser.Join_statementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#lock_statement}.
 	 * @param ctx the parse tree
