@@ -3,9 +3,9 @@ package ut.pp.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import main.antlr4.ut.pp.parser.MyLangLexer;
-import main.antlr4.ut.pp.parser.MyLangParser;
-import main.antlr4.ut.pp.parser.Visitor;
+import antlr4.ut.pp.parser.MyLangLexer;
+import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.Visitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -17,10 +17,10 @@ public class TestParser {
     @Test
     public void oneHello() {
         String input = "var x = 5; " +
-                "x = True;";
+                "{shared var x = 10;   }";
         String input1 = "var x = [1,True,3];";
         String input2 = "for (var x = 5; x < 5; z+=1) { y = 4; }";
-        String input3 = "var x = 2; if x == 2 { y = 3;}";
+        String input3 = "var x = 2; if x == 2 && x == True && x == True { x = 3;}";
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input3));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
@@ -231,6 +231,17 @@ public class TestParser {
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
+    @Test
+    public void testForLoop() {
+        String input = "var a = True; var b = False; var c = a <= b > True < False;";
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
+        CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
+        MyLangParser parser = new MyLangParser(tokens);
+        ParseTree tree = parser.module();
 
+        Visitor visitor = new Visitor();
+        visitor.visit(tree);
+        assertEquals(0, visitor.error_vector.size());
+    }
 
 }
