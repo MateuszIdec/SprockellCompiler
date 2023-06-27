@@ -46,7 +46,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             System.err.println(error.getText());
             return attrs;
         }
-        Attrs RHSattrs = visit(ctx.getChild(3));
+        Attrs RHSattrs = visit(ctx.getChild(3+ sharedVarCase));
         // type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         symbolTable.add(attrs.name, attrs.type);

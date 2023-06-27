@@ -39,7 +39,7 @@ lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
 definition_statement: var_def | func_def;
 
 func_def: 'fn' IDENTIFIER '(' parameters ')' '{' body '}';
-var_def: ('shared'? 'var') IDENTIFIER '=' expression ';' ;
+var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';' ;
 print_statement: 'print' expression;
@@ -58,6 +58,7 @@ BOOL: 'True' | 'False';
 PAR: 'par';
 LOCK: 'lock';
 UNLOCK: 'unlock';
+SHARED: 'shared';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | ([1-9] [0-9]*);
