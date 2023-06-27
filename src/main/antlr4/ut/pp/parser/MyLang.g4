@@ -48,7 +48,6 @@ parameters: (parameter (',' parameter)*);
 parameter: VAR IDENTIFIER;
 args: (expression (',' expression)*)?;
 
-
 VAR: 'var';
 SHARED: 'shared';
 BOOL: 'True' | 'False';
