@@ -11,6 +11,6 @@ public class RedefinitonError extends CompilerError {
 
     @Override
     public String getText(){
-        return getErrorHeader() + " Redefinition of: " + attrs.name;
+        return getErrorHeader() + " redefinition of \"" + attrs.name + "\"";
     }
 }

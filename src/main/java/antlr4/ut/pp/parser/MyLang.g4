@@ -9,7 +9,7 @@ compound_statement: '{' body '}';
 
 expression_statement: expression? ';';
 
-expression: assignment_expr | fork_expression;
+expression: assignment_expr | fork_expression | get_thread_id_expression;
 assignment_expr: postfix_expr assignment_operator logical_and_expression | logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
 logical_and_expression: relational_expr ('&&' relational_expr)*;
@@ -34,6 +34,7 @@ elif_part: 'elif' expression compound_statement;
 else_part: 'else' compound_statement;
 
 fork_expression: FORK compound_statement;
+get_thread_id_expression: TID;
 join_statement: JOIN expression;
 
 lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
@@ -58,6 +59,7 @@ args: (expression (',' expression)*)?;
 BOOL: 'True' | 'False';
 FORK: 'fork';
 JOIN: 'join';
+TID : 'Tid';
 LOCK: 'lock';
 UNLOCK: 'unlock';
 SHARED: 'shared';

@@ -161,6 +161,12 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFork_expression(MyLangParser.Fork_expressionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MyLangParser#get_thread_id_expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MyLangParser#join_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

@@ -317,6 +317,18 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterJoin_statement(MyLangParser.Join_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}

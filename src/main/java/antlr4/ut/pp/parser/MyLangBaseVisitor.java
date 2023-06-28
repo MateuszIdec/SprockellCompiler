@@ -193,6 +193,13 @@ public class MyLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitJoin_statement(MyLangParser.Join_statementContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

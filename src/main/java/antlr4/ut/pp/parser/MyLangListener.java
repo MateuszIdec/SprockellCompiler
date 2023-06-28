@@ -258,6 +258,16 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitFork_expression(MyLangParser.Fork_expressionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MyLangParser#get_thread_id_expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MyLangParser#get_thread_id_expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MyLangParser#join_statement}.
 	 * @param ctx the parse tree
 	 */

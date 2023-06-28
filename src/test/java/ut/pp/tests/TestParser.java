@@ -43,7 +43,6 @@ public class TestParser {
     public void testSimplestExpression_statement()
     {
         String input = ";";
-        parseString(input);
 
         assertEquals(0, parseString(input));
     }
@@ -178,5 +177,11 @@ public class TestParser {
         String input = "var x = fork { var y = 0;}; var y = 5; join y;";
 
         assertEquals(1, parseString(input));
+    }
+    @Test
+    public void testTid(){
+        String input = "var x = Tid;";
+
+        assertEquals(0,parseString(input));
     }
 }

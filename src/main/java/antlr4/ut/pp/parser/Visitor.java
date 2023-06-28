@@ -33,6 +33,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
+        Attrs attrs = new Attrs();
         int sharedVarCase = 0;
 
         if(ctx.getChild(0).getText().equals("shared")) {
@@ -40,10 +41,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
 
         String name = ctx.getChild(1 + sharedVarCase).getText();
-        Attrs attrs = new Attrs();
+
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
             attrs.type = SymbolTable.Type.ERROR;
+            attrs.name = name;
 
             RedefinitonError error = new RedefinitonError(ctx, attrs);
             error_vector.add(error);
@@ -51,13 +53,22 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             return attrs;
         }
         Attrs RHSattrs = visit(ctx.getChild(3+ sharedVarCase));
-        // type of name is inferred from the RHS
+
+        // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
         symbolTable.add(attrs.name, attrs.type);
-        System.out.println("New variable defined:" + attrs.name);
+        System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
     }
+
+    @Override
+    public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
+        Attrs attrs = new Attrs();
+        attrs.type = SymbolTable.Type.INT;
+        return attrs;
+    }
+
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
         return visit(ctx.getChild(0));
