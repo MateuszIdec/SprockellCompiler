@@ -124,8 +124,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
         Attrs attrs = new Attrs();
-//        String code = ""
+        int TID = symbolTables.size() - 1;
+        String allocatedReg = memoryManager.allocateRegister(TID);
+        String putValueIntoRegInstruction = "Load (ImmValue " + TID +") " + allocatedReg;
+        code.get(TID).add(putValueIntoRegInstruction);
         attrs.type = Type.INT;
+        attrs.regName = allocatedReg;
         return attrs;
     }
 

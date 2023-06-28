@@ -28,20 +28,30 @@ public class TestCodeGeneration {
         visitor.visit(tree);
     }
 
+    String fullCode(String text) {
+        String prologue = "prog = [Load (ImmValue 1) regA, WriteInstr regA (DirAddr 0), ";
+        String epilogue = ", WriteInstr reg0 (DirAddr 0), EndProg]";
+        return prologue + text + epilogue;
+    }
     @Before
     public void setup() {
         visitor = new Visitor();
     }
 
     @Test
-    public void varDefinition() {
-        String text = "var x = 1 + 2 * 3 + 4;";
+    public void varDefinitionTid() {
+        String text = "var x = Tid;";
         generateCode(text);
 
-//        assertEquals("prog = [Load (ImmValue 10) regA, Store regA (DirAddr 0)]", visitor.getCode(0));
+        assertEquals(fullCode("Load (ImmValue 0) regA, Store regA (DirAddr 0)"), visitor.getCode(0));
+    }
 
-//        String text1 = "var x = 10; var y = 10;";
-//        generateCode(text1);
-        System.out.println(visitor.prettyCode(0));
+    @Test
+    public void varDefinitionWithAdditionttf() {
+        String text = "var x = 2 + 2;";
+        generateCode(text);
+
+        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB, " +
+                "Compute Add regA regB regB, Store regB (DirAddr 0)"),visitor.getCode(0));
     }
 }
