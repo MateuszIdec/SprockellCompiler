@@ -193,9 +193,9 @@ public class TestParser {
     }
     @Test
     public void testFork() {
-        String input = "var x = fork {var y = 0;}; y = 2;";
-        ParseTree tree =parseString(input);
-
+        String input = "var x = fork {var y = 0;}; y = 2; var z = 2; join z;";
+        ParseTree tree = parseString(input);
         visitor.visit(tree);
+        assertEquals(3, visitor.error_vector.size());
     }
 }

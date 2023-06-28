@@ -17,6 +17,6 @@ public class TypeError extends CompilerError{
 
     @Override
     public String getText() {
-        return getErrorHeader() + ": Type mismatch: " + attrs.name + "is: " + attrs.type +" but expected to be " + expected_type;
+        return getErrorHeader() + ": Type mismatch: \"" + attrs.name + "\" is " + attrs.type +" but expected to be " + expected_type;
     }
 }
