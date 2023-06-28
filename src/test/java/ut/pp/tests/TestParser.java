@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 import Errors.NameNotFoundError;
 import Errors.TypeError;
-import org.junit.jupiter.api.BeforeEach;
 
 public class TestParser {
     static Visitor visitor;
@@ -22,16 +21,23 @@ public class TestParser {
     public void setup() {
         visitor = new Visitor();
     }
-    @BeforeEach
-    public void beforeEach() {
+
+    /**
+     * Clears the {@code visitor.error_vector} and then invokes {@code visitor.visit()} for a parse tree
+     * generated from {@code text}
+     * @param text string to parse
+     * @return error count
+     */
+    public int parseString(String text) {
         visitor.error_vector.clear();
-    }
-    public void parseString(String text) {
+
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
+
         visitor.visit(tree);
+        return visitor.error_vector.size();
     }
     @Test
     public void testSimplestExpression_statement()
@@ -39,7 +45,7 @@ public class TestParser {
         String input = ";";
         parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testVariableDefinitionSyntaxIncomplete()
@@ -53,18 +59,16 @@ public class TestParser {
     public void testJustVeriableDef()
     {
         String input = "var x = 0;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
 
     @Test
     public void testReassignment()
     {
         String input = "var x = 0; x = 1;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
 
     @Test
@@ -96,9 +100,8 @@ public class TestParser {
     public void testManyNestedScopes()
     {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} x = True;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testManyNestedScopesError()
@@ -120,17 +123,15 @@ public class TestParser {
     public void testAssignmentPlusEq()
     {
         String input = "var x = 0; x += 1;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testAssignmentMinusEq()
     {
         String input = "var x = 0; x -= 1;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testAssignmentWithUnknownOperation()
@@ -144,44 +145,38 @@ public class TestParser {
     public void testRelation()
     {
         String input = "var a = True; var b = False; var c = a <= b;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testManyRelations()
     {
         String input = "var a = True; var b = False; var c = a <= b > True < False;";
-        parseString(input);
 
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(0, parseString(input));
     }
     @Test
     public void testForLoop() {
         String input = "var y = 0; for (y; x < 5; x += 1) { y+= 1; } ";
-        parseString(input);
 
-        assertEquals(4, visitor.error_vector.size());
+        assertEquals(4, parseString(input));
     }
     @Test
     public void testFork() {
         String input = "var x = fork {var y = 0;}; y = 2; var z = 2; join z;";
-        parseString(input);
 
-        assertEquals(3, visitor.error_vector.size());
+        assertEquals(3, parseString(input));
     }
     @Test
     public void testLock() {
         String input = "var x = fork { var y = 0;}; var y = 5; lock x;";
-        parseString(input);
 
-        assertEquals(1, visitor.error_vector.size());
+        assertEquals(1, parseString(input));
     }
     @Test
     public void testJoin() {
         String input = "var x = fork { var y = 0;}; var y = 5; join y;";
-        parseString(input);
 
-        assertEquals(1, visitor.error_vector.size());
+        assertEquals(1, parseString(input));
     }
 }
