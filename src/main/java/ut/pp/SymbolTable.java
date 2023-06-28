@@ -52,6 +52,28 @@ public class SymbolTable {
     public Type getType (String id) {
         return Objects.requireNonNull(getSymbol(id)).type;
     }
+    public int getAddress(String id)
+    {
+        return Objects.requireNonNull(getSymbol(id)).address;
+    }
+    public boolean isShared(String id)
+    {
+        return Objects.requireNonNull(getSymbol(id)).isShared;
+    }
+
+    private Symbol getSymbol(String id)
+    {
+        int depth = symbolStack.size()-1;
+        while(depth >= 0)
+        {
+            if(symbolStack.get(depth).containsKey(id)) {
+                return symbolStack.get(depth).get(id);
+            }
+            depth -= 1;
+        }
+        return null;
+    }
+
     /**
      * Perform scope and type checking on a variable
      * @return

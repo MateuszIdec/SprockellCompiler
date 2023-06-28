@@ -1,5 +1,6 @@
 package antlr4.ut.pp.parser;
 
+import code_generation.MemoryManager;
 import errors.CompilerError;
 import errors.NameNotFoundError;
 import errors.RedefinitonError;
@@ -71,6 +72,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         boolean is_parent_for_loop = false;
 //        if(ctx.getParent().getParent() instanceof MyLangParser.For_statementContext)
 //            is_parent_for_loop = true;
@@ -87,6 +89,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
+        int TID = symbolTables.size() - 1 ;
+        SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
@@ -108,7 +112,13 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             System.err.println(error.getText());
             return attrs;
         }
-        Attrs RHSattrs = visit(ctx.getChild(3+ sharedVarCase));
+        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
+        int address = memoryManager.createNewVariable(TID , 1);
+        ArrayList<String> currentCode = code.get(TID);
+
+        String loadInstruction = "Store " + RHSattrs.regName + " (DirAddr " + address + ")";
+        currentCode.add(loadInstruction);
+        memoryManager.deallocateRegister(TID, RHSattrs.regName);
 
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
@@ -282,7 +292,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         else
         {
             // TODO update attrs.type if we add floats
-            manyOperation(ctx, new Object());
+            attrs = manyOperation(ctx);
         }
         return attrs;
     }
@@ -320,6 +330,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
         if(ctx.IDENTIFIER() != null) {
             attrs.name = ctx.getText();
@@ -343,6 +354,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) {
+        int TID = symbolTables.size() -1;
         Attrs attrs = new Attrs();
 
         if(ctx.INT() != null) {
@@ -350,6 +362,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         } else if (ctx.BOOL() != null) {
             attrs.type = Type.BOOL;
         }
+        ArrayList<String> currentCode = code.get(TID);
+        String allocatedReg = memoryManager.allocateRegister(TID);
+        String putValueIntoRegInstruction = "Load (ImmValue " + ctx.INT().getText() +") " + allocatedReg;
+        currentCode.add(putValueIntoRegInstruction);
+        attrs.regName = allocatedReg;
+
         return attrs;
     }
 
@@ -366,6 +384,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitFunc_def(MyLangParser.Func_defContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         // TODO add name to symbolTable
         symbolTable.openScope();
         Attrs name = visit(ctx.getChild(1));
@@ -386,6 +405,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitParameter(MyLangParser.ParameterContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         // TODO how to determine type of variable before function call?
         symbolTable.add(ctx.getText(), null);
         return new Attrs();
@@ -440,6 +460,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitFor_statement(MyLangParser.For_statementContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         symbolTable.openScope();
         for(int i = 0; i < ctx.getChildCount(); i++)
         {
@@ -477,6 +498,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
         if(ctx.IDENTIFIER() != null) {
             attrs.name = ctx.getChild(1).getText();
@@ -513,12 +535,37 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         //TODO improve
         return getType(attr1) == getType(attrs2);
     }
-    private void manyOperation(ParserRuleContext ctx, Object operationType)
+    private Attrs manyOperation(ParserRuleContext ctx)
     {
+        int TID = symbolTables.size() -1;
+        ArrayList<String> curr_code = code.get(TID);
+
         Attrs LHS = visit(ctx.getChild(0));
         Attrs RHS;
         for(int i = 2; i < ctx.getChildCount(); i+=2)
         {
+            String operationCode = "";
+            String operation = ctx.getChild(i-1).getText();
+            if(operation.equals("+"))
+                operationCode = "Add ";
+            else if (operation.equals("-"))
+                operationCode = "Sub ";
+            else if (operation.equals("*"))
+                operationCode = "Mul ";
+            else if (operation.equals("*"))
+                operationCode = "Mul ";
+            else if (operation.equals("=="))
+                operationCode = "Equal ";
+            else if (operation.equals("!="))
+                operationCode = "NEq ";
+            else if (operation.equals(">"))
+                operationCode = "Gt ";
+            else if (operation.equals("<"))
+                operationCode = "Lt ";
+            else if (operation.equals("||"))
+                operationCode = "And ";
+            else if (operation.equals("&&"))
+                operationCode = "Or ";
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
             if(!are_compatible(LHS, RHS))
@@ -527,8 +574,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
+            String instr = "Compute " + operationCode + LHS.regName + " " + RHS.regName + " " + RHS.regName;
+            curr_code.add(instr);
+
+            memoryManager.deallocateRegister(TID, LHS.regName);
+
             LHS = RHS;
         }
+        return LHS;
     }
     private boolean is_array_like(Attrs attrs)
     {
