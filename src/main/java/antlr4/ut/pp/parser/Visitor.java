@@ -406,18 +406,23 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
         Attrs attrs = new Attrs();
         if(ctx.IDENTIFIER() != null) {
-            attrs.name = ctx.getText();
+            attrs.name = ctx.getChild(1).getText();
+
             // If identifier not found in all scopes then add new error
-            if(!symbolTable.contains(attrs.name))
+            if(symbolTable.contains(attrs.name)) {
+                attrs.type = symbolTable.getType(attrs.name);
+            }
+            else
             {
+                attrs.type = SymbolTable.Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
         }
-        if(getType(attrs) != SymbolTable.Type.FORK)
+        if(getType(attrs) == SymbolTable.Type.FORK)
         {
-            TypeError error = new TypeError(ctx, attrs, SymbolTable.Type.FORK);
+            TypeError error = new TypeError(ctx, attrs, SymbolTable.Type.INT);
             System.err.println(error.getText());
             error_vector.add(error);
         }
