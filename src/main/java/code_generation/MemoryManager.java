@@ -1,4 +1,4 @@
-package ut.pp;
+package code_generation;
 
 import java.util.ArrayList;
 import java.util.Stack;

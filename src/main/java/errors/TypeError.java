@@ -1,4 +1,4 @@
-package Errors;
+package errors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.Attrs;

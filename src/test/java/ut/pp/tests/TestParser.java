@@ -11,8 +11,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
 import org.junit.Test;
-import Errors.NameNotFoundError;
-import Errors.TypeError;
+import errors.NameNotFoundError;
+import errors.TypeError;
 
 public class TestParser {
     static Visitor visitor;
@@ -55,7 +55,7 @@ public class TestParser {
         // TODO Properly test this. ASK TA
     }
     @Test
-    public void testJustVeriableDef()
+    public void testJustVariableDef()
     {
         String input = "var x = 0;";
 

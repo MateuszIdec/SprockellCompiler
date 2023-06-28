@@ -1,12 +1,11 @@
 package antlr4.ut.pp.parser;
 
-import Errors.CompilerError;
-import Errors.NameNotFoundError;
-import Errors.RedefinitonError;
-import Errors.TypeError;
+import errors.CompilerError;
+import errors.NameNotFoundError;
+import errors.RedefinitonError;
+import errors.TypeError;
+import code_generation.CodeGenerator;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTree;
 import ut.pp.*;
 
 import java.util.Vector;
@@ -14,6 +13,7 @@ import java.util.Vector;
 public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Vector<CompilerError> error_vector = new Vector<>();
     public SymbolTable symbolTable = new SymbolTable();
+    public CodeGenerator codeGenerator = new CodeGenerator();
 
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
@@ -59,6 +59,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         attrs.name = name;
         symbolTable.add(attrs.name, attrs.type);
         System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
+
+        String value = ctx.getChild(3).getText();
+        codeGenerator.allocateVar(attrs, value);
         return attrs;
     }
 
