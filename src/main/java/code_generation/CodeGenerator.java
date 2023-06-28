@@ -1,35 +1,64 @@
 package code_generation;
-import ut.pp.Attrs;
+import antlr4.ut.pp.parser.MyLangLexer;
+import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.Visitor;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.nio.file.Path;
 
 public class CodeGenerator {
 
-    /**
-     * Puts value in the register
-     */
-
-    ArrayList<String> generatedCode = new ArrayList<>();
-
-    public void appendCode(String text) {
-//        if(generatedCode.length() == 9) {
-//            generatedCode += text + "\n, ";
-//        }
-        generatedCode.add(text);
-
+    public static ArrayList<String> generateCode(String text)
+    {
+        Visitor visitor = new Visitor();
+        MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
+        CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
+        MyLangParser parser = new MyLangParser(tokens);
+        ParseTree tree = parser.module();
+        visitor.visit(tree);
+        ArrayList<String> code = visitor.getCode();
+        ArrayList<String> result = new ArrayList<>();
+        for(String threadCode : code) {
+            result.add("module Main where \n\nimport Sprockell \n\nprog::[Instruction] \n"
+                    + prettyCode(threadCode) + "\n\nmain = run [prog]");
+        }
+        return result;
     }
-    public String getCode() {
-        return "prog = " + generatedCode.toString();
-    }
 
-    public boolean allocateVar(Attrs attrs, String value) {
+    public static boolean compileFile(String input, String output) throws IOException {
+        Path inputPath = FileSystems.getDefault().getPath("", input);
+        Path outputPath = FileSystems.getDefault().getPath("", output);
 
-        System.out.println("[CodeGen] allocating var, value: " + value);
+        String result = new String(Files.readAllBytes(inputPath));
 
-        String text = "Load " + "(ImmValue " + value + ") regA";
-        System.out.println(text);
-        appendCode(text);
+        File outputFile = new File(outputPath.toString());
+        String code = generateCode(result).get(0);
+        FileWriter fileWriter = new FileWriter(outputFile);
+        fileWriter.write(code);
+        fileWriter.close();
 
         return true;
+
+    }
+    public static String prettyCode(String code) {
+        StringBuilder result = new StringBuilder();
+
+        for(int x = 0; x < code.length(); x++) {
+            if(code.charAt(x) == ',') {
+                result.append("\n      ,");
+            }
+            else {
+                result.append(code.charAt(x));
+            }
+        }
+        return result.toString();
     }
 }

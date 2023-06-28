@@ -5,13 +5,10 @@ import errors.CompilerError;
 import errors.NameNotFoundError;
 import errors.RedefinitonError;
 import errors.TypeError;
-import code_generation.CodeGenerator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.*;
 
 import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Stack;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Attrs> {
@@ -21,26 +18,21 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public MemoryManager memoryManager = new MemoryManager();
 
     /**
-     *
+     * @return code for all threads
+     */
+    public ArrayList<String> getCode() {
+        ArrayList<String> result = new ArrayList<>();
+
+        for(ArrayList<String> threadCode : code) {
+            result.add("prog = " + threadCode.toString());
+        }
+        return result;
+    }
+    /**
      * @return code for a given {@code threadId}
      */
     public String getCode(int threadId) {
         return "prog = " + code.get(0).toString();
-    }
-
-    public String prettyCode(int threadId) {
-        String code = getCode(threadId);
-        StringBuilder result = new StringBuilder();
-
-        for(int x = 0; x < code.length(); x++) {
-            if(code.charAt(x) == ',') {
-                result.append("\n       ,");
-            }
-            else {
-                result.append(code.charAt(x));
-            }
-        }
-        return result.toString();
     }
 
     @Override
