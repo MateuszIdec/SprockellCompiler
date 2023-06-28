@@ -4,5 +4,7 @@ import java.util.ArrayList;
 
 public class Attrs {
         public String name;
-        public SymbolTable.Type type;
+        public Type type;
+        public String regName;
+
 }

@@ -8,12 +8,66 @@ import code_generation.CodeGenerator;
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.*;
 
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Stack;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Vector<CompilerError> error_vector = new Vector<>();
-    public SymbolTable symbolTable = new SymbolTable();
-    public CodeGenerator codeGenerator = new CodeGenerator();
+    public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
+    ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
+    public MemoryManager memoryManager = new MemoryManager();
+
+    /**
+     *
+     * @return code for a given {@code threadId}
+     */
+    public String getCode(int threadId) {
+        return "prog = " + code.get(0).toString();
+    }
+
+    public String prettyCode(int threadId) {
+        String code = getCode(threadId);
+        StringBuilder result = new StringBuilder();
+
+        for(int x = 0; x < code.length(); x++) {
+            if(code.charAt(x) == ',') {
+                result.append("\n       ,");
+            }
+            else {
+                result.append(code.charAt(x));
+            }
+        }
+        return result.toString();
+    }
+
+    @Override
+    public Attrs visitModule(MyLangParser.ModuleContext ctx) {
+        symbolTables.add(new SymbolTable());
+        memoryManager.createNewLocalMemoryManager();
+        code.add(new ArrayList<>());
+        int TID = symbolTables.size()-1;
+
+        try {
+            ArrayList<String> currCode = code.get(TID);
+            String allocatedReg = memoryManager.allocateRegister(TID);
+            String loadOneToReg = "Load (ImmValue 1) " + allocatedReg;
+            int globalVarAddress = memoryManager.allocateGlobalVariable();
+            String updateGlobalVar = "WriteInstr " + allocatedReg +  " (DirAddr "+ globalVarAddress + ")";
+            memoryManager.deallocateRegister(TID ,allocatedReg);
+            currCode.add(loadOneToReg);
+            currCode.add(updateGlobalVar);
+            super.visitModule(ctx);
+            String epilog = "WriteInstr " + "reg0 " +  "(DirAddr "+ globalVarAddress + ")";
+            currCode.add(epilog);
+            currCode.add("EndProg");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return null;
+    }
 
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
@@ -34,9 +88,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         Attrs attrs = new Attrs();
+        Symbol symbol = new Symbol();
         int sharedVarCase = 0;
 
         if(ctx.getChild(0).getText().equals("shared")) {
+            symbol.isShared = true;
             sharedVarCase = 1;
         }
 
@@ -44,7 +100,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
         // Check if variable is already defined in local scope
         if(symbolTable.checkLocalScope(name)) {
-            attrs.type = SymbolTable.Type.ERROR;
+            attrs.type = Type.ERROR;
             attrs.name = name;
 
             RedefinitonError error = new RedefinitonError(ctx, attrs);
@@ -57,18 +113,19 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
-        symbolTable.add(attrs.name, attrs.type);
-        System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
 
-        String value = ctx.getChild(3).getText();
-        codeGenerator.allocateVar(attrs, value);
+        symbol.type = attrs.type;
+
+        symbolTable.add(attrs.name, symbol);
+        System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
     }
 
     @Override
     public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.type = SymbolTable.Type.INT;
+//        String code = ""
+        attrs.type = Type.INT;
         return attrs;
     }
 
@@ -92,7 +149,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
         Attrs attrs = new Attrs();
-        System.out.println("Now in assignment expr," + ctx.getText());
         if(ctx.getChildCount() == 1) {
             System.out.println("Assignment: Single child!" + ctx.getText());
 
@@ -108,7 +164,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             System.out.println("Assignment: " + printVariable(attrs));
             // TODO change this so it uses tables to determine whether an *= or += can be performed
             if (!are_compatible(name,value)) {
-                attrs.type = SymbolTable.Type.ERROR;
+                attrs.type = Type.ERROR;
                 TypeError error = new TypeError(ctx, name, value);
                 error_vector.add(error);
                 System.err.println(error.getText());
@@ -155,8 +211,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs = visit(ctx.getChild(0));
         }
         else{
-            attrs.type = SymbolTable.Type.BOOL;
-            manyOperation(ctx, new Object()); // TODO change object to ENUM OperationType
+            attrs.type = Type.BOOL;
+//            manyOperation(ctx, new Object()); // TODO change object to ENUM OperationType
         }
         return attrs;
     }
@@ -169,7 +225,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(ctx.getChildCount() == 3) {
             Attrs expression = visit(ctx.getChild(1));
             Attrs compoundStatement = visit(ctx.getChild(2));
-            attrs.type = SymbolTable.Type.BOOL; // TODO why? If not usable then include in for loop
+            attrs.type = Type.BOOL; // TODO why? If not usable then include in for loop
         }
         // Visit all else/ elif stateents
         else {
@@ -208,8 +264,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         else
         {
-            // TODO update attrs.type if we add floats
-            manyOperation(ctx, new Object());
+            attrs = manyOperation(ctx);
         }
         return attrs;
     }
@@ -242,7 +297,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 Attrs array_like = visit(ctx.getChild(0));
                 if(!is_array_like(array_like))
                 {
-                    TypeError error = new TypeError(ctx, array_like, SymbolTable.Type.ARRAY); // TODO not only array but all arraylike
+                    TypeError error = new TypeError(ctx, array_like, Type.ARRAY); // TODO not only array but all arraylike
                     error_vector.add(error);
                     System.err.println(error.getText());
                 }
@@ -250,7 +305,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 if (!is_int_like(int_like))
                 {
                     // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
-                    TypeError error = new TypeError(ctx, int_like, SymbolTable.Type.INT); // TODO not only array but all arraylike
+                    TypeError error = new TypeError(ctx, int_like, Type.INT); // TODO not only array but all arraylike
                     error_vector.add(error);
                     System.err.println(error.getText());
                 }
@@ -287,9 +342,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
 
         if(ctx.INT() != null) {
-            attrs.type = SymbolTable.Type.INT;
+            attrs.type = Type.INT;
         } else if (ctx.BOOL() != null) {
-            attrs.type = SymbolTable.Type.BOOL;
+            attrs.type = Type.BOOL;
         }
         return attrs;
     }
@@ -344,7 +399,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         // TODO what about array?
         Attrs attrs = new Attrs();
         if(ctx.STRING() != null)
-            attrs.type = SymbolTable.Type.STRING; // why you build attr if it is not returned?
+            attrs.type = Type.STRING; // why you build attr if it is not returned?
         return visit(ctx.getChild(0));
     }
 
@@ -358,14 +413,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         // TODO move the responsibility of checking if the same type to visit array
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(0));
-        SymbolTable.Type type = childAttrs.type;
+        Type type = childAttrs.type;
 
         for(int x = 1; x < ctx.getChildCount(); x++) {
             if(ctx.getChild(x).getText().equals(","))
                 x++;
             childAttrs = visit(ctx.getChild(x));
             if(type != childAttrs.type) {
-                attrs.type = SymbolTable.Type.ERROR;
+                attrs.type = Type.ERROR;
 
             }
         }
@@ -400,16 +455,16 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitFork_expression(MyLangParser.Fork_expressionContext ctx) {
         Attrs attrs = new Attrs();
         visit(ctx.getChild(1));
-        attrs.type = SymbolTable.Type.FORK;
+        attrs.type = Type.FORK;
         return attrs;
     }
 
     @Override
     public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
         Attrs fork = visit(ctx.getChild(1));
-        if(getType(fork) != SymbolTable.Type.FORK)
+        if(getType(fork) != Type.FORK)
         {
-            TypeError error = new TypeError(ctx, fork, SymbolTable.Type.FORK);
+            TypeError error = new TypeError(ctx, fork, Type.FORK);
             System.err.println(error.getText());
             error_vector.add(error);
         }
@@ -428,22 +483,23 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             }
             else
             {
-                attrs.type = SymbolTable.Type.ERROR;
+                attrs.type = Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
         }
-        if(getType(attrs) == SymbolTable.Type.FORK)
+        if(getType(attrs) == Type.FORK)
         {
-            TypeError error = new TypeError(ctx, attrs, SymbolTable.Type.INT);
+            TypeError error = new TypeError(ctx, attrs, Type.INT);
             System.err.println(error.getText());
             error_vector.add(error);
         }
         return attrs;
     }
 
-    private SymbolTable.Type getType(Attrs attrs){
+    private Type getType(Attrs attrs){
+        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         if (attrs.name != null)
             return symbolTable.getType(attrs.name);
         return attrs.type;
@@ -473,12 +529,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     private boolean is_array_like(Attrs attrs)
     {
         // TODO impove;
-        return attrs.type == SymbolTable.Type.ARRAY  || attrs.type == SymbolTable.Type.STRING;
+        return attrs.type == Type.ARRAY  || attrs.type == Type.STRING;
     }
     private boolean is_int_like(Attrs attrs)
     {
         // TODO impove;
-        return attrs.type == SymbolTable.Type.INT  || attrs.type == SymbolTable.Type.BOOL;
+        return attrs.type == Type.INT  || attrs.type == Type.BOOL;
     }
 
 }

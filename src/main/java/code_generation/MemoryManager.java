@@ -80,7 +80,7 @@ public class MemoryManager {
 
     public int allocateGlobalVariable() throws Exception
     {
-        if(freeGlobalMemoryAddresses.size() == 0)
+        if(freeGlobalMemoryAddresses.size() != 0)
             return freeGlobalMemoryAddresses.pop();
         throw new Exception();
     }

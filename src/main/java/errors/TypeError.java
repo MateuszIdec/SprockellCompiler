@@ -3,14 +3,15 @@ package errors;
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.Attrs;
 import ut.pp.SymbolTable;
+import ut.pp.Type;
 
 public class TypeError extends CompilerError{
-    SymbolTable.Type expected_type;
+    Type expected_type;
     public TypeError(ParserRuleContext ctx, Attrs name,Attrs value) {
         super(ctx, name);
          this.expected_type = value.type;
     }
-    public TypeError(ParserRuleContext ctx, Attrs name,SymbolTable.Type type) {
+    public TypeError(ParserRuleContext ctx, Attrs name,Type type) {
         super(ctx, name);
         this.expected_type = type;
     }
