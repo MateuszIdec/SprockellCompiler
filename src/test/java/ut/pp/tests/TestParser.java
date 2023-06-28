@@ -9,12 +9,23 @@ import antlr4.ut.pp.parser.Visitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import Errors.NameNotFoundError;
 import Errors.TypeError;
+import org.junit.jupiter.api.BeforeEach;
 
 public class TestParser {
+    static Visitor visitor;
+
+    @Before
+    public void setup() {
+        visitor = new Visitor();
+    }
+    @BeforeEach
+    public void beforeEach() {
+        visitor.error_vector.clear();
+    }
     @Test
     public void oneHello() {
         String input = "var x = 5; " +
@@ -28,7 +39,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(1, tree.getChildCount()); // 1 for Hello, 1 for EOF
     }
@@ -41,7 +51,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -54,16 +63,9 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         // TODO Properly test this. ASK TA
     }
-    @Test
-    public void testSanity()
-    {
-        assertEquals(false, false);
-    }
-
     @Test
     public void testJustVeriableDef()
     {
@@ -73,7 +75,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -87,7 +88,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -101,7 +101,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
     }
@@ -115,7 +114,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertTrue(visitor.error_vector.get(0) instanceof TypeError);
     }
@@ -128,7 +126,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertTrue(visitor.error_vector.get(0) instanceof TypeError);
     }
@@ -141,7 +138,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -154,7 +150,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
     }
@@ -167,7 +162,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
     }
@@ -180,7 +174,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -193,7 +186,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -206,7 +198,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         // TODO Properly test this. ASK TA
     }
@@ -219,7 +210,6 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
@@ -232,29 +222,28 @@ public class TestParser {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
         assertEquals(0, visitor.error_vector.size());
     }
     @Test
     public void testForLoop() {
-        String input = "var a = True; var b = False; var c = a <= b > True < False;";
+        String input = "var y = 0; for (y; x < 5; x += 1) { y+= 1; } ";
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
-        Visitor visitor = new Visitor();
         visitor.visit(tree);
-        assertEquals(0, visitor.error_vector.size());
+        assertEquals(4, visitor.error_vector.size());
     }
     @Test
     public void testFork() {
-        String input = "var x = fork {var y = 0;};";
+        String input = "var x = fork {var y = 0;}; y = 2;";
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(input));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
-    }
 
+        visitor.visit(tree);
+    }
 }
