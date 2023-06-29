@@ -607,8 +607,20 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int TID = symbolTables.size()-1;
 
         Attrs attrs = visit(ctx.getChild(1));
-        String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
-        code.get(TID).add(writeInstr);
+        // Check if the expression to be printed is in register or in memory
+        if(attrs.regName != null) {
+            String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
+            code.get(TID).add(writeInstr);
+        }
+        else {
+            String allocatedRegister = memoryManager.allocateRegister(TID);
+            String loadInstr = "Load (DirAddr " + symbolTables.get(TID).getAddress(attrs.name) +") " + allocatedRegister;
+            String writeInstr = "WriteInstr " + allocatedRegister + " numberIO";
+
+            code.get(TID).add(loadInstr);
+            code.get(TID).add(writeInstr);
+            memoryManager.deallocateRegister(TID,allocatedRegister);
+        }
         return attrs;
     }
 }
