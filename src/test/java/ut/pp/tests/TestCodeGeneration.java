@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import antlr4.ut.pp.parser.Visitor;
+import code_generation.CodeGenerator;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -41,17 +42,25 @@ public class TestCodeGeneration {
     @Test
     public void varDefinitionTid() {
         String text = "var x = Tid;";
-        generateCode(text);
 
+        generateCode(text);
         assertEquals(fullCode("Load (ImmValue 0) regA, Store regA (DirAddr 0)"), visitor.getCode(0));
     }
 
     @Test
-    public void varDefinitionWithAdditionttf() {
+    public void varDefinitionWithAddition() {
         String text = "var x = 2 + 2;";
-        generateCode(text);
 
+        generateCode(text);
         assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB, " +
                 "Compute Add regA regB regB, Store regB (DirAddr 0)"),visitor.getCode(0));
+    }
+    @Test
+    public void printStatement() {
+        String text = "print 2 + 2";
+
+        generateCode(text);
+        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB," +
+                " Compute Add regA regB regB, WriteInstr regB numberIO"),visitor.getCode(0));
     }
 }

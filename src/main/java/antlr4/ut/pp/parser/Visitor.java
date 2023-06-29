@@ -143,7 +143,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
         if(ctx.getChildCount()==2)
-            return visit(ctx.getChild(0));
+            return visit(ctx.
+
+                    getChild(0));
         else
             return new Attrs();
     }
@@ -156,7 +158,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 1) {
-            System.out.println("Assignment: Single child!" + ctx.getText());
+            System.out.println("Assignment: Single child, value: " + ctx.getText());
 
             attrs = visit(ctx.getChild(0));
         }
@@ -544,8 +546,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 operationCode = "Sub ";
             else if (operation.equals("*"))
                 operationCode = "Mul ";
-            else if (operation.equals("*"))
-                operationCode = "Mul ";
             else if (operation.equals("=="))
                 operationCode = "Equal ";
             else if (operation.equals("!="))
@@ -586,5 +586,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return attrs.type == Type.INT  || attrs.type == Type.BOOL;
     }
 
+    @Override
+    public Attrs visitPrint_statement(MyLangParser.Print_statementContext ctx) {
+        int TID = symbolTables.size()-1;
+
+        Attrs attrs = visit(ctx.getChild(1));
+        String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
+        code.get(TID).add(writeInstr);
+        return attrs;
+    }
 }
 // Dont forget to regenerate ANTLR grammar

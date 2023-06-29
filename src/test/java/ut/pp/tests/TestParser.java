@@ -184,4 +184,10 @@ public class TestParser {
 
         assertEquals(0,parseString(input));
     }
+    @Test
+    public void testPrint() {
+        String input = "var x = 5; print x + 2;";
+
+        assertEquals(0, parseString(input));
+    }
 }
