@@ -208,52 +208,44 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
-        // TODO: something wrong here
+        System.out.println(ctx.getText());
         Attrs attrs = new Attrs();
-        for (int i = 0; i < ctx.children.size(); i++){
-            attrs = visit(ctx.getChild(i));
-            if(attrs.name != null)
-                break;
+        if(ctx.children.size() == 1) {
+            attrs = visit(ctx.getChild(0));
+        }
+        else
+        {
+            attrs = manyOperation(ctx);
         }
         return attrs;
     }
 
     @Override
     public Attrs visitLogical_and_expression(MyLangParser.Logical_and_expressionContext ctx) {
-        // TODO: something wrong here
+        System.out.println(ctx.getText());
         Attrs attrs = new Attrs();
-        for (int i = 0; i < ctx.children.size(); i++){
-            attrs = visit(ctx.getChild(i));
-            if(attrs.name == null)
-                break;
+        if(ctx.children.size() == 1) {
+            attrs = visit(ctx.getChild(0));
+        }
+        else
+        {
+            attrs = manyOperation(ctx);
         }
         return attrs;
     }
 
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
-
-        if(ctx.getChildCount() == 1) {
-            return visit(ctx.getChild(0));
+        System.out.println(ctx.getText());
+        Attrs attrs = new Attrs();
+        if(ctx.children.size() == 1) {
+            attrs = visit(ctx.getChild(0));
         }
-        else{
-            Attrs LHS = visit(ctx.getChild(0));
-            Attrs RHS = visit(ctx.getChild(2));
-            if(LHS.type == Type.ERROR) {
-                return LHS;
-            }
-            else {
-                if(are_compatible(LHS,RHS)) {
-                    LHS.type = RHS.type;
-                    return LHS;
-                }
-                else {
-                    LHS.type = Type.ERROR;
-                    return LHS;
-                }
-            }
-//            manyOperation(ctx, new Object()); // TODO change object to ENUM OperationType
+        else
+        {
+            attrs = manyOperation(ctx);
         }
+        return attrs;
     }
 
     @Override
@@ -262,8 +254,18 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
+            int TID = symbolTables.size()-1;
+            ArrayList<String> currCode = code.get(TID);
             Attrs expression = visit(ctx.getChild(1));
+            currCode.add("Compute Equal " + expression.regName + " reg0" + " " + expression.regName);
+            int currentInstructionNr = currCode.size();
+            String branchInstruction = "Branch " + expression.regName + " ";
+            currCode.add(branchInstruction);
             Attrs compoundStatement = visit(ctx.getChild(2));
+            int instructionNrAfterIfBody = currCode.size();
+            int label = instructionNrAfterIfBody - currentInstructionNr;
+            branchInstruction += "( Rel " + label + " )";
+            currCode.set(currentInstructionNr, branchInstruction);
             attrs.type = Type.BOOL; // TODO why? If not usable then include in for loop
         }
         // Visit all else/ elif stateents
@@ -507,7 +509,23 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
         // TODO check what attributes should be in if statement, maybe visit while, for and if just for code gen?
-        return super.visitWhile_statement(ctx);
+        int TID = symbolTables.size()-1;
+        ArrayList<String> currCode = code.get(TID);
+        int startOfWhile = currCode.size();
+        Attrs expression = visit(ctx.getChild(1));
+        int branchInstructionNr = currCode.size();
+        currCode.add("Compute Equal " + expression.regName + " reg0" + " " + expression.regName);
+        String branchInstruction = "Branch " + expression.regName + " ";
+        memoryManager.deallocateRegister(symbolTables.size()-1, expression.regName);
+        currCode.add(branchInstruction);
+        Attrs compoundStatement = visit(ctx.getChild(2));
+        String jumpInstruction = "Jump (Abs " + startOfWhile + ")";
+        currCode.add(jumpInstruction);
+
+        int instructionNrAfterBody = currCode.size();
+        branchInstruction += "( Abs " + instructionNrAfterBody + " )";
+        currCode.set(branchInstructionNr + 1, branchInstruction);
+        return null;
     }
 
     @Override
