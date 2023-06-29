@@ -2,7 +2,6 @@ package errors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.Attrs;
-import ut.pp.SymbolTable;
 import ut.pp.Type;
 
 public class TypeError extends CompilerError{
@@ -18,6 +17,6 @@ public class TypeError extends CompilerError{
 
     @Override
     public String getText() {
-        return getErrorHeader() + ": Type mismatch: \"" + attrs.name + "\" is " + attrs.type +" but expected to be " + expected_type;
+        return getErrorHeader() + " Type mismatch: variable \"" + attrs.name + "\" has a type " + attrs.type +", but has been assigned " + expected_type;
     }
 }

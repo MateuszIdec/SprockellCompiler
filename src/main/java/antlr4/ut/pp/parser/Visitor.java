@@ -8,8 +8,8 @@ import errors.TypeError;
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.*;
 
-import javax.naming.Name;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Attrs> {
@@ -33,7 +33,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
      * @return code for a given {@code threadId}
      */
     public String getCode(int threadId) {
-        return "prog = " + code.get(0).toString();
+        return "prog = " + code.get(threadId).toString();
     }
 
     @Override
@@ -164,8 +164,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 1) {
-            System.out.println("Assignment: Single child, value: " + ctx.getText());
-
+//            System.out.println("Assignment: Single child, value: " + ctx.getText());
             attrs = visit(ctx.getChild(0));
         }
         else if(ctx.getChildCount() == 3) {
@@ -181,15 +180,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 return attrs;
             }
 
-            attrs.type = value.type;
-
             System.out.println("Assignment: " + printVariable(attrs));
             // TODO change this so it uses tables to determine whether an *= or += can be performed
             if (!are_compatible(attrs ,value)) {
-                attrs.type = Type.ERROR;
+                attrs.type = Type.INT;
                 TypeError error = new TypeError(ctx, attrs, value);
                 error_vector.add(error);
                 System.err.println(error.getText());
+                attrs.type = Type.ERROR;
             }
             else {
                 int memoryAddress = symbolTables.get(TID).getAddress(attrs.name);
@@ -203,6 +201,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitAssignment_operator(MyLangParser.Assignment_operatorContext ctx) {
         Attrs attrs = new Attrs();
+        attrs.name = ctx.getText();
         return attrs;
     }
 
@@ -329,7 +328,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs = visit(ctx.getChild(0));
         } else if (child_count == 4)
         {
-            if (ctx.getChild(1).getText() == "[") // TODO .equals("[") instead of ==
+            if (Objects.equals(ctx.getChild(1).getText(), "["))
             {
                 // array-like type, child[0] has to be array-like, so String or array, child[2] has to be int-like
                 Attrs array_like = visit(ctx.getChild(0));
@@ -354,7 +353,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
 
         if(ctx.getChildCount() == 1) {
@@ -463,8 +461,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitStatement(MyLangParser.StatementContext ctx) {
-        Attrs attrs = visit(ctx.getChild(0));
-        return attrs;
+        return visit(ctx.getChild(0));
     }
 
     @Override
@@ -616,24 +613,35 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         {
             String operationCode = "";
             String operation = ctx.getChild(i-1).getText();
-            if(operation.equals("+"))
-                operationCode = "Add ";
-            else if (operation.equals("-"))
-                operationCode = "Sub ";
-            else if (operation.equals("*"))
-                operationCode = "Mul ";
-            else if (operation.equals("=="))
-                operationCode = "Equal ";
-            else if (operation.equals("!="))
-                operationCode = "NEq ";
-            else if (operation.equals(">"))
-                operationCode = "Gt ";
-            else if (operation.equals("<"))
-                operationCode = "Lt ";
-            else if (operation.equals("||"))
-                operationCode = "And ";
-            else if (operation.equals("&&"))
-                operationCode = "Or ";
+            switch (operation) {
+                case "+":
+                    operationCode = "Add ";
+                    break;
+                case "-":
+                    operationCode = "Sub ";
+                    break;
+                case "*":
+                    operationCode = "Mul ";
+                    break;
+                case "==":
+                    operationCode = "Equal ";
+                    break;
+                case "!=":
+                    operationCode = "NEq ";
+                    break;
+                case ">":
+                    operationCode = "Gt ";
+                    break;
+                case "<":
+                    operationCode = "Lt ";
+                    break;
+                case "||":
+                    operationCode = "And ";
+                    break;
+                case "&&":
+                    operationCode = "Or ";
+                    break;
+            }
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
 

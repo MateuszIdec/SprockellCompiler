@@ -17,7 +17,7 @@ public abstract class CompilerError {
     }
     public String getErrorHeader()
     {
-        return"Error: line: "+ lineNr + ": column: "+columnNr + ":";
+        return"Error (line: "+ lineNr + ", column: "+columnNr + "):";
     }
     public abstract String getText();
 }
