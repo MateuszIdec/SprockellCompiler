@@ -158,6 +158,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
+        int TID = symbolTables.size() - 1;
+
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 1) {
             System.out.println("Assignment: Single child, value: " + ctx.getText());
@@ -178,6 +180,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 TypeError error = new TypeError(ctx, name, value);
                 error_vector.add(error);
                 System.err.println(error.getText());
+            }
+            else {
+                int memoryAddress = symbolTables.get(TID).getAddress(attrs.name);
+                String storeNewValueInVarMemAddress = "Store " + value.regName + " " + "(DirAddr " + memoryAddress + ")";
+                code.get(TID).add(storeNewValueInVarMemAddress);
             }
         }
         return attrs;
@@ -328,6 +335,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
+
         if(ctx.IDENTIFIER() != null) {
             attrs.name = ctx.getText();
 
