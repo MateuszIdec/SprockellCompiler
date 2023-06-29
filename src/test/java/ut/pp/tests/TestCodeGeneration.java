@@ -63,4 +63,21 @@ public class TestCodeGeneration {
         assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB," +
                 " Compute Add regA regB regB, WriteInstr regB numberIO"),visitor.getCode(0));
     }
+    @Test
+    public void additionInExpressionStatementThenPrint() {
+        String text = "var x = 2; x = x + 2; print x;";
+
+        generateCode(text);
+        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 2) regB," +
+                " Compute Add regA regB regB, Store regB (DirAddr 0), Load (DirAddr 0) regA," +
+                " WriteInstr regA numberIO"), visitor.getCode(0));
+    }
+    @Test
+    public void additionInPrint() {
+        String text = "var x = 2; print x + 3";
+
+        generateCode(text);
+        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 3) regB," +
+                " Compute Add regA regB regB, WriteInstr regB numberIO"), visitor.getCode(0));
+    }
 }

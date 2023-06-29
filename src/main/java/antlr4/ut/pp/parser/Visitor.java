@@ -57,7 +57,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             currCode.add(epilog);
             currCode.add("EndProg");
         } catch (Exception e) {
-            System.err.println("Parsing failed");
+            System.err.println("Parsing failed " + e);
         }
         return null;
     }
