@@ -177,7 +177,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 return attrs;
             }
 
-            attrs.name = name.name;
             attrs.type = value.type;
 
             System.out.println("Assignment: " + printVariable(attrs));
@@ -343,24 +342,43 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
 
-        if(ctx.var_call() != null) {
-            attrs.name = ctx.getText();
-
-            // If identifier not found in all scopes then add new error
-            if(!symbolTable.contains(attrs.name))
-            {
-                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-                attrs.type = Type.ERROR;
-                error_vector.add(error);
-                System.err.println(error.getText());
-            }
-        }
-        else if(ctx.getChildCount() == 1) {
+        if(ctx.getChildCount() == 1) {
             attrs = visit(ctx.getChild(0));
         }
         else if (ctx.getChildCount() == 3)
             attrs = visit(ctx.getChild(1));
 
+        return attrs;
+    }
+
+    @Override
+    public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
+        Attrs attrs = new Attrs();
+        int TID = symbolTables.size() - 1;
+        attrs.name = ctx.getText();
+
+        // check whether var name in scope
+        // find its corresponding address
+        // load value from found address and put it into newly allocated register
+        if(symbolTables.get(TID).contains(attrs.name)) {
+            SymbolTable st = symbolTables.get(TID);
+            int address = st.getAddress(attrs.name);
+            String allocatedRegister = memoryManager.allocateRegister(TID);
+
+            attrs.type = st.getType(attrs.name);
+            attrs.regName = allocatedRegister;
+
+            String loadInstruction = "Load (DirAddr " + address + ") " + allocatedRegister;
+            code.get(TID).add(loadInstruction);
+
+        }
+        else
+        {
+            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            attrs.type = Type.ERROR;
+            error_vector.add(error);
+            System.err.println(error.getText());
+        }
         return attrs;
     }
 
