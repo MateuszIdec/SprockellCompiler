@@ -1,7 +1,6 @@
 package ut.pp.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
@@ -79,5 +78,13 @@ public class TestCodeGeneration {
         generateCode(text);
         assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 3) regB," +
                 " Compute Add regA regB regB, WriteInstr regB numberIO"), visitor.getCode(0));
+    }
+    @Test
+    public void varToVarAssignment() {
+        String text = "var x = 2; var y = x + 1;";
+
+        generateCode(text);
+        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 1) regB," +
+                " Compute Add regA regB regB, Store regB (DirAddr 1)"), visitor.getCode(0));
     }
 }
