@@ -686,13 +686,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             memoryManager.deallocateRegister(TID, attrs.regName);
         }
         else {
-            String allocatedRegister = memoryManager.allocateRegister(TID);
-            String loadInstr = "Load (DirAddr " + symbolTables.get(TID).getAddress(attrs.name) +") " + allocatedRegister;
-            String writeInstr = "WriteInstr " + allocatedRegister + " numberIO";
-
-            code.get(TID).add(loadInstr);
-            code.get(TID).add(writeInstr);
-            memoryManager.deallocateRegister(TID,allocatedRegister);
+            attrs.type = Type.ERROR;
+            System.err.println("Print statement received expression with no regName specified");
         }
         return attrs;
     }
