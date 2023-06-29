@@ -117,8 +117,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         attrs.name = name;
 
         symbol.type = attrs.type;
+        symbol.address = address;
 
         symbolTable.add(attrs.name, symbol);
+//        System.out.println(symbolTable.getAddress(name));
         System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
     }
