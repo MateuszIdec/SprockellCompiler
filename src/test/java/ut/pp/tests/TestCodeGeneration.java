@@ -84,6 +84,7 @@ public class TestCodeGeneration {
         String text = "var x = 2; var y = x + 1;";
 
         generateCode(text);
+        System.out.println(  CodeGenerator.prettyCodeWithLineNumbers(visitor.getCode(0)));
         assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 1) regB," +
                 " Compute Add regA regB regB, Store regB (DirAddr 1)"), visitor.getCode(0));
     }
