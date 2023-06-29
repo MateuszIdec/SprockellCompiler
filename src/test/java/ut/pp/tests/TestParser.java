@@ -193,20 +193,20 @@ public class TestParser {
     }
     @Test
     public void testIf() {
-        String input = "var x = 0; if y == 5 { x = 2;}";
+        String input = "var x = 0; if y == 5 { y = 2;}";
         String input1 = "var x = 0; if x == 0 { var x = 2; }";
         String input2 = "var x = 0; if x == 0 { x = True; }";
 
-        assertEquals(1, parseString(input));
+        assertEquals(2, parseString(input));
         assertEquals(0,parseString(input1));
         assertEquals(1,parseString(input2));
     }
     @Test
     public void testWhile() {
         String input = "var x = 0; while y < 10 { y = y + 1; }";
-        String input1 = "var x = 0 while x < 5 { x = True; }";
+        String input1 = "var x = 0; while x < 5 { x = True; }";
 
-        assertEquals(2, parseString(input));
+        assertEquals(3, parseString(input));
         assertEquals(1,parseString(input1));
     }
 }

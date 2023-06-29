@@ -208,8 +208,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
-        System.out.println(ctx.getText());
-        Attrs attrs = new Attrs();
+        Attrs attrs;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -222,8 +221,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLogical_and_expression(MyLangParser.Logical_and_expressionContext ctx) {
-        System.out.println(ctx.getText());
-        Attrs attrs = new Attrs();
+        Attrs attrs;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -236,8 +234,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
-        System.out.println(ctx.getText());
-        Attrs attrs = new Attrs();
+        Attrs attrs;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -374,8 +371,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         int TID = symbolTables.size() - 1;
         attrs.name = ctx.getText();
-
-        System.out.println("var_call: " + ctx.getText());
 
         // check whether var name in scope
         // find its corresponding address
@@ -613,6 +608,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         ArrayList<String> curr_code = code.get(TID);
 
         Attrs LHS = visit(ctx.getChild(0));
+        if(LHS.type == Type.ERROR)
+            return LHS;
+
         Attrs RHS;
         for(int i = 2; i < ctx.getChildCount(); i+=2)
         {
@@ -638,6 +636,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 operationCode = "Or ";
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
+
+            if(RHS.type == Type.ERROR)
+                return RHS;
+
             if(!are_compatible(LHS, RHS))
             {
                 TypeError error = new TypeError(ctx, LHS, RHS);
