@@ -232,16 +232,28 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
-        Attrs attrs = new Attrs();
 
         if(ctx.getChildCount() == 1) {
-            attrs = visit(ctx.getChild(0));
+            return visit(ctx.getChild(0));
         }
         else{
-            attrs.type = Type.BOOL;
+            Attrs LHS = visit(ctx.getChild(0));
+            Attrs RHS = visit(ctx.getChild(2));
+            if(LHS.type == Type.ERROR) {
+                return LHS;
+            }
+            else {
+                if(are_compatible(LHS,RHS)) {
+                    LHS.type = RHS.type;
+                    return LHS;
+                }
+                else {
+                    LHS.type = Type.ERROR;
+                    return LHS;
+                }
+            }
 //            manyOperation(ctx, new Object()); // TODO change object to ENUM OperationType
         }
-        return attrs;
     }
 
     @Override
@@ -285,7 +297,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitAdditive_expr(MyLangParser.Additive_exprContext ctx) {
-        Attrs attrs = new Attrs();
+        Attrs attrs;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -360,6 +372,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         int TID = symbolTables.size() - 1;
         attrs.name = ctx.getText();
+
+        System.out.println("var_call: " + ctx.getText());
 
         // check whether var name in scope
         // find its corresponding address
@@ -641,6 +655,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(attrs.regName != null) {
             String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
             code.get(TID).add(writeInstr);
+            memoryManager.deallocateRegister(TID, attrs.regName);
         }
         else {
             String allocatedRegister = memoryManager.allocateRegister(TID);

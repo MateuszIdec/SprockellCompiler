@@ -191,9 +191,17 @@ public class TestParser {
         assertEquals(0, parseString(input));
     }
     @Test
-    public void test() {
-        String input = "var a = 0; a = b;";
+    public void testIf() {
+        String input = "var x = 0; if y == 5 { x = 2;}";
+        String input1 = "var x = 0; if x == 0 { var x = 2; }";
 
         assertEquals(1, parseString(input));
+        assertEquals(0,parseString(input1));
+    }
+    @Test
+    public void testWhile() {
+        String input = "var x = 0; while y < 10 { y = y + 1; }";
+
+        assertEquals(2, parseString(input));
     }
 }
