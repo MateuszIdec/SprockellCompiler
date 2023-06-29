@@ -62,6 +62,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return null;
     }
 
+
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
@@ -71,6 +72,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         System.out.println("Entering scope");
         if(!is_parent_for_loop)
             symbolTable.openScope();
+
 
         for (int i = 0 ; i< ctx.getChildCount();i++)
             visit(ctx.getChild(i));
@@ -361,14 +363,18 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int TID = symbolTables.size() -1;
         Attrs attrs = new Attrs();
 
+        String primitiveTypeValue = "0";
         if(ctx.INT() != null) {
             attrs.type = Type.INT;
+            primitiveTypeValue = ctx.INT().getText();
         } else if (ctx.BOOL() != null) {
             attrs.type = Type.BOOL;
+            if (ctx.BOOL().getText().equals("True"))
+                primitiveTypeValue = "1";
         }
         ArrayList<String> currentCode = code.get(TID);
         String allocatedReg = memoryManager.allocateRegister(TID);
-        String putValueIntoRegInstruction = "Load (ImmValue " + ctx.INT().getText() +") " + allocatedReg;
+        String putValueIntoRegInstruction = "Load (ImmValue " + primitiveTypeValue +") " + allocatedReg;
         currentCode.add(putValueIntoRegInstruction);
         attrs.regName = allocatedReg;
 
