@@ -8,6 +8,7 @@ import errors.TypeError;
 import org.antlr.v4.runtime.ParserRuleContext;
 import ut.pp.*;
 
+import javax.naming.Name;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -168,12 +169,15 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs = visit(ctx.getChild(0));
         }
         else if(ctx.getChildCount() == 3) {
-            Attrs name = visit(ctx.getChild(0));
             Attrs value = visit(ctx.getChild(2));
+            attrs.name =  ctx.getChild(0).getText();
 
-            if(name.type == Type.ERROR) {
-                attrs.name = name.name;
+            if(!symbolTables.get(TID).contains(attrs.name)) {
+
                 attrs.type = Type.ERROR;
+                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                System.err.println(error.getText());
+                error_vector.add(error);
                 return attrs;
             }
 
@@ -181,9 +185,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
             System.out.println("Assignment: " + printVariable(attrs));
             // TODO change this so it uses tables to determine whether an *= or += can be performed
-            if (!are_compatible(name,value)) {
+            if (!are_compatible(attrs ,value)) {
                 attrs.type = Type.ERROR;
-                TypeError error = new TypeError(ctx, name, value);
+                TypeError error = new TypeError(ctx, attrs, value);
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
@@ -649,5 +653,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         return attrs;
     }
+    
 }
 // Dont forget to regenerate ANTLR grammar
