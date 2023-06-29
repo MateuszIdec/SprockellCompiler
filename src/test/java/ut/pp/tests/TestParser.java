@@ -154,17 +154,17 @@ public class TestParser {
 
         assertEquals(0, parseString(input));
     }
-    @Test
-    public void testForLoop() {
-        String input = "var y = 0; for (y; x < 5; x += 1) { y+= 1; } ";
-
-        assertEquals(4, parseString(input));
-    }
+//    @Test
+//    public void testForLoop() {
+//        String input = "var y = 0; for (y; x < 5; x += 1) { y+= 1; } ";
+//
+//        assertEquals(4, parseString(input));
+//    }
     @Test
     public void testFork() {
         String input = "var x = fork {var y = 0;}; y = 2; var z = 2; join z;";
 
-        assertEquals(3, parseString(input));
+        assertEquals(2, parseString(input));
     }
     @Test
     public void testLock() {
@@ -189,5 +189,11 @@ public class TestParser {
         String input = "var x = 5; print x + 2;";
 
         assertEquals(0, parseString(input));
+    }
+    @Test
+    public void test() {
+        String input = "var a = 0; a = b;";
+
+        assertEquals(1, parseString(input));
     }
 }

@@ -148,6 +148,16 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitAtomic_expr(MyLangParser.Atomic_exprContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MyLangParser#var_call}.
+	 * @param ctx the parse tree
+	 */
+	void enterVar_call(MyLangParser.Var_callContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MyLangParser#var_call}.
+	 * @param ctx the parse tree
+	 */
+	void exitVar_call(MyLangParser.Var_callContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MyLangParser#assignment_operator}.
 	 * @param ctx the parse tree
 	 */

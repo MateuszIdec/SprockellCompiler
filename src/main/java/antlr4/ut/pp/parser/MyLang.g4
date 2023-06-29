@@ -10,14 +10,15 @@ compound_statement: '{' body '}';
 expression_statement: expression? ';';
 
 expression: assignment_expr | fork_expression | get_thread_id_expression;
-assignment_expr: postfix_expr assignment_operator logical_and_expression | logical_or_expression;
+assignment_expr: IDENTIFIER assignment_operator logical_and_expression | logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
 logical_and_expression: relational_expr ('&&' relational_expr)*;
 relational_expr: additive_expr (relational_operator additive_expr)*;
 additive_expr: multi_expr (additive_operator multi_expr)*; // We can add unary operator and so on with this hierarchy
 multi_expr: postfix_expr (multi_operator postfix_expr)*;
 postfix_expr: atomic_expr | postfix_expr '[' expression ']' | postfix_expr'(' args ')';
-atomic_expr: IDENTIFIER | '(' expression ')' | primitive_type | compound_type;
+atomic_expr: var_call | '(' expression ')' | primitive_type | compound_type;
+var_call: IDENTIFIER;
 
 assignment_operator: '=' | '+=' | '-=' | '*=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';

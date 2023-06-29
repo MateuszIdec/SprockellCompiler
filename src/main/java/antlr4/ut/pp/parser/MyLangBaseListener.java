@@ -185,6 +185,18 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterVar_call(MyLangParser.Var_callContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVar_call(MyLangParser.Var_callContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterAssignment_operator(MyLangParser.Assignment_operatorContext ctx) { }
 	/**
 	 * {@inheritDoc}

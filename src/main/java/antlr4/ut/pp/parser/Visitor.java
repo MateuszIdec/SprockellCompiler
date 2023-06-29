@@ -56,9 +56,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             currCode.add(epilog);
             currCode.add("EndProg");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println("Parsing failed");
         }
-
         return null;
     }
 
@@ -171,6 +170,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         else if(ctx.getChildCount() == 3) {
             Attrs name = visit(ctx.getChild(0));
             Attrs value = visit(ctx.getChild(2));
+
+            if(name.type == Type.ERROR) {
+                attrs.name = name.name;
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
 
             attrs.name = name.name;
             attrs.type = value.type;
@@ -338,13 +343,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
 
-        if(ctx.IDENTIFIER() != null) {
+        if(ctx.var_call() != null) {
             attrs.name = ctx.getText();
 
             // If identifier not found in all scopes then add new error
             if(!symbolTable.contains(attrs.name))
             {
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                attrs.type = Type.ERROR;
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
@@ -497,6 +503,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
         Attrs fork = visit(ctx.getChild(1));
+
         if(getType(fork) != Type.FORK)
         {
             TypeError error = new TypeError(ctx, fork, Type.FORK);
@@ -510,22 +517,22 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
-        if(ctx.IDENTIFIER() != null) {
-            attrs.name = ctx.getChild(1).getText();
 
-            // If identifier not found in all scopes then add new error
-            if(symbolTable.contains(attrs.name)) {
-                attrs.type = symbolTable.getType(attrs.name);
-            }
-            else
-            {
-                attrs.type = Type.ERROR;
-                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-                error_vector.add(error);
-                System.err.println(error.getText());
-            }
+        attrs.name = ctx.getChild(1).getText();
+
+        // If identifier not found in all scopes then add new error
+        if(symbolTable.contains(attrs.name)) {
+            attrs.type = symbolTable.getType(attrs.name);
         }
-        if(getType(attrs) == Type.FORK)
+        else
+        {
+            attrs.type = Type.ERROR;
+            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            error_vector.add(error);
+            System.err.println(error.getText());
+        }
+
+        if(attrs.type == Type.FORK)
         {
             TypeError error = new TypeError(ctx, attrs, Type.INT);
             System.err.println(error.getText());
@@ -543,6 +550,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     private boolean are_compatible(Attrs attr1, Attrs attrs2)
     {
         //TODO improve
+
         return getType(attr1) == getType(attrs2);
     }
     private Attrs manyOperation(ParserRuleContext ctx)

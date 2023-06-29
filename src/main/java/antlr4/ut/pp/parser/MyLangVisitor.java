@@ -95,6 +95,12 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAtomic_expr(MyLangParser.Atomic_exprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MyLangParser#var_call}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVar_call(MyLangParser.Var_callContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MyLangParser#assignment_operator}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
