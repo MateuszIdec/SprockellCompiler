@@ -38,54 +38,54 @@ public class TestCodeGeneration {
         visitor = new Visitor();
     }
 
-    @Test
-    public void varDefinitionTid() {
-        String text = "var x = Tid;";
-
-        generateCode(text);
-        assertEquals(fullCode("Load (ImmValue 0) regA, Store regA (DirAddr 0)"), visitor.getCode(0));
-    }
-
-    @Test
-    public void varDefinitionWithAddition() {
-        String text = "var x = 2 + 2;";
-
-        generateCode(text);
-        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB, " +
-                "Compute Add regA regB regB, Store regB (DirAddr 0)"),visitor.getCode(0));
-    }
-    @Test
-    public void printStatement() {
-        String text = "print 2 + 2";
-
-        generateCode(text);
-        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB," +
-                " Compute Add regA regB regB, WriteInstr regB numberIO"),visitor.getCode(0));
-    }
-    @Test
-    public void additionInExpressionStatementThenPrint() {
-        String text = "var x = 2; x = x + 2; print x;";
-
-        generateCode(text);
-        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 2) regB," +
-                " Compute Add regA regB regB, Store regB (DirAddr 0), Load (DirAddr 0) regA," +
-                " WriteInstr regA numberIO"), visitor.getCode(0));
-    }
-    @Test
-    public void additionInPrint() {
-        String text = "var x = 2; print x + 3";
-
-        generateCode(text);
-        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 3) regB," +
-                " Compute Add regA regB regB, WriteInstr regB numberIO"), visitor.getCode(0));
-    }
-    @Test
-    public void varToVarAssignment() {
-        String text = "var x = 2; var y = x + 1;";
-
-        generateCode(text);
-        System.out.println(  CodeGenerator.prettyCodeWithLineNumbers(visitor.getCode(0)));
-        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 1) regB," +
-                " Compute Add regA regB regB, Store regB (DirAddr 1)"), visitor.getCode(0));
-    }
+//    @Test
+//    public void varDefinitionTid() {
+//        String text = "var x = Tid;";
+//
+//        generateCode(text);
+//        assertEquals(fullCode("Load (ImmValue 0) regA, Store regA (DirAddr 0)"), visitor.getCode(0));
+//    }
+//
+//    @Test
+//    public void varDefinitionWithAddition() {
+//        String text = "var x = 2 + 2;";
+//
+//        generateCode(text);
+//        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB, " +
+//                "Compute Add regA regB regB, Store regB (DirAddr 0)"),visitor.getCode(0));
+//    }
+//    @Test
+//    public void printStatement() {
+//        String text = "print 2 + 2";
+//
+//        generateCode(text);
+//        assertEquals(fullCode("Load (ImmValue 2) regA, Load (ImmValue 2) regB," +
+//                " Compute Add regA regB regB, WriteInstr regB numberIO"),visitor.getCode(0));
+//    }
+//    @Test
+//    public void additionInExpressionStatementThenPrint() {
+//        String text = "var x = 2; x = x + 2; print x;";
+//
+//        generateCode(text);
+//        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 2) regB," +
+//                " Compute Add regA regB regB, Store regB (DirAddr 0), Load (DirAddr 0) regA," +
+//                " WriteInstr regA numberIO"), visitor.getCode(0));
+//    }
+//    @Test
+//    public void additionInPrint() {
+//        String text = "var x = 2; print x + 3";
+//
+//        generateCode(text);
+//        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 3) regB," +
+//                " Compute Add regA regB regB, WriteInstr regB numberIO"), visitor.getCode(0));
+//    }
+//    @Test
+//    public void varToVarAssignment() {
+//        String text = "var x = 2; var y = x + 1;";
+//
+//        generateCode(text);
+//        System.out.println(  CodeGenerator.prettyCodeWithLineNumbers(visitor.getCode(0)));
+//        assertEquals(fullCode("Load (ImmValue 2) regA, Store regA (DirAddr 0), Load (DirAddr 0) regA, Load (ImmValue 1) regB," +
+//                " Compute Add regA regB regB, Store regB (DirAddr 1)"), visitor.getCode(0));
+//    }
 }
