@@ -17,6 +17,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
     ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     public MemoryManager memoryManager = new MemoryManager();
+    private int TID = 0;
+    private int threadCounter = 1;
 
     /**
      * @return code for all threads
@@ -38,18 +40,24 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitModule(MyLangParser.ModuleContext ctx) {
-        symbolTables.add(new SymbolTable());
+
+        SymbolTable st = new SymbolTable();
+        symbolTables.add(st);
+        Symbol tidSymbol = new Symbol();
+
         memoryManager.createNewLocalMemoryManager();
         code.add(new ArrayList<>());
         int TID = symbolTables.size()-1;
 
         try {
             ArrayList<String> currCode = code.get(TID);
-            String allocatedReg = memoryManager.allocateRegister(TID);
-            String loadOneToReg = "Load (ImmValue 1) " + allocatedReg;
+            String loadOneToReg = "Load (ImmValue 1) regA";
             int globalVarAddress = memoryManager.allocateGlobalVariable();
-            String updateGlobalVar = "WriteInstr " + allocatedReg +  " (DirAddr "+ globalVarAddress + ")";
-            memoryManager.deallocateRegister(TID ,allocatedReg);
+            tidSymbol.address = globalVarAddress;
+            tidSymbol.type = Type.FORK;
+            tidSymbol.isShared = false;
+            st.add("TID", tidSymbol );
+            String updateGlobalVar = "WriteInstr regA (DirAddr "+ globalVarAddress + ")";
             currCode.add(loadOneToReg);
             currCode.add(updateGlobalVar);
             super.visitModule(ctx);
@@ -145,17 +153,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     }
 
-//    @Override
-//    public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
-//        Attrs attrs = new Attrs();
-//        int TID = symbolTables.size() - 1;
-//        String allocatedReg = memoryManager.allocateRegister(TID);
-//        String putValueIntoRegInstruction = "Load (ImmValue " + TID +") " + allocatedReg;
-//        code.get(TID).add(putValueIntoRegInstruction);
-//        attrs.type = Type.INT;
-//        attrs.regName = allocatedReg;
-//        return attrs;
-//    }
 
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
@@ -400,6 +397,19 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
     @Override
+    public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
+        Attrs attrs = new Attrs();
+        int TID = symbolTables.size()-1;
+        SymbolTable st = symbolTables.get(TID);
+        attrs.type = Type.FORK;
+        ArrayList<String> currCode = code.get(TID);
+        int address = st.getAddress("TID");
+        currCode.add("ReadInstr (DirAddr "+ address +")");
+        currCode.add("Push regA");
+        return attrs;
+    }
+
+    @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
         int TID = symbolTables.size() - 1;
@@ -572,8 +582,37 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitFork_expression(MyLangParser.Fork_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        visit(ctx.getChild(1));
+        int currTID = symbolTables.size()-1;
+        ArrayList<String> currCode = code.get(TID);
+        int newThreadIsRunningAddress = -1 ;
+        try {
+            newThreadIsRunningAddress = memoryManager.allocateGlobalVariable();
+            SymbolTable newST = symbolTables.get(TID).deepCopy();
+            Symbol newTID = new Symbol();
+            newTID.isShared = false;
+            newTID.type = Type.FORK;
+            newTID.address = newThreadIsRunningAddress;
+            newST.updateTID(newTID);
+            symbolTables.add(newST);
+            ArrayList<String> newThreadCode = new ArrayList<>();
+            code.add(newThreadCode);
+            TID = threadCounter;
+            threadCounter ++;
+            String loadOneToReg = "Load (ImmValue 1) regA";
+            String updateGlobalVar = "WriteInstr regA (DirAddr "+ newThreadIsRunningAddress + ")";
+            newThreadCode.add(loadOneToReg);
+            newThreadCode.add(updateGlobalVar);
+            visit(ctx.getChild(1));
+            String epilog = "WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")";
+            newThreadCode.add(epilog);
+            newThreadCode.add("EndProg");
+            TID = currTID;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         attrs.type = Type.FORK;
+        currCode.add("Load (ImmValue "+ newThreadIsRunningAddress +") regA");
+        currCode.add("Pop regA");
         return attrs;
     }
 
