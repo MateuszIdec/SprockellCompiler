@@ -103,4 +103,27 @@ public class SymbolTable {
         int depth = symbolStack.size()-1;
         return symbolStack.get(depth).containsKey(id);
     }
+
+    public SymbolTable deepCopy() {
+        SymbolTable clonedSymbolTable = new SymbolTable();
+
+        for (Map<String, Symbol> scopeMap : symbolStack) {
+            Map<String, Symbol> clonedScopeMap = new HashMap<>();
+
+            for (Map.Entry<String, Symbol> entry : scopeMap.entrySet()) {
+                String key = entry.getKey();
+                Symbol value = entry.getValue().deepCopy(); // Assuming Symbol class implements deepCopy()
+
+                clonedScopeMap.put(key, value);
+            }
+
+            clonedSymbolTable.symbolStack.add(clonedScopeMap);
+        }
+
+        return clonedSymbolTable;
+    }
+    public void updateTID(Symbol newSymbol)
+    {
+        symbolStack.get(0).put("TID", newSymbol);
+    }
 }
