@@ -764,6 +764,5 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         curr_code.add(writeInstr);
         return attrs;
     }
-    
 }
 // Dont forget to regenerate ANTLR grammar
