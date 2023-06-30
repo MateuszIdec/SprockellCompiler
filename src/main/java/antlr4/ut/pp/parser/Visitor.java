@@ -1,15 +1,14 @@
 package antlr4.ut.pp.parser;
 
-import code_generation.MemoryManager;
 import errors.CompilerError;
-import errors.NameNotFoundError;
+import code_generation.MemoryManager;
 import errors.RedefinitonError;
-import errors.TypeError;
+import errors.NameNotFoundError;
 import org.antlr.v4.runtime.ParserRuleContext;
+import errors.TypeError;
 import ut.pp.*;
-
-import java.util.ArrayList;
 import java.util.Objects;
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Attrs> {
@@ -122,7 +121,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         symbol.address = address;
 
         symbolTable.add(attrs.name, symbol);
-//        System.out.println(symbolTable.getAddress(name));
         System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
     }
@@ -147,9 +145,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
         if(ctx.getChildCount()==2)
-            return visit(ctx.
-
-                    getChild(0));
+            return visit(ctx.getChild(0));
         else
             return new Attrs();
     }
@@ -234,6 +230,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs;
+        int TID = symbolTables.size() - 1;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -257,6 +254,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             int currentInstructionNr = currCode.size();
             String branchInstruction = "Branch " + expression.regName + " ";
             currCode.add(branchInstruction);
+            memoryManager.deallocateRegister(TID, expression.regName);
             Attrs compoundStatement = visit(ctx.getChild(2));
             int instructionNrAfterIfBody = currCode.size();
             int label = instructionNrAfterIfBody - currentInstructionNr;
@@ -508,7 +506,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int branchInstructionNr = currCode.size();
         currCode.add("Compute Equal " + expression.regName + " reg0" + " " + expression.regName);
         String branchInstruction = "Branch " + expression.regName + " ";
-        memoryManager.deallocateRegister(symbolTables.size()-1, expression.regName);
+        memoryManager.deallocateRegister(TID, expression.regName);
+
         currCode.add(branchInstruction);
         Attrs compoundStatement = visit(ctx.getChild(2));
         String jumpInstruction = "Jump (Abs " + startOfWhile + ")";
@@ -683,7 +682,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         if(attrs.regName != null) {
             String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
             code.get(TID).add(writeInstr);
-            memoryManager.deallocateRegister(TID, attrs.regName);
         }
         else {
             attrs.type = Type.ERROR;
@@ -691,6 +689,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         return attrs;
     }
-    
+
 }
 // Dont forget to regenerate ANTLR grammar

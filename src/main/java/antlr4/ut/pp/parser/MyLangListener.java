@@ -348,6 +348,16 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitPrint_statement(MyLangParser.Print_statementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MyLangParser#read_expression}.
+	 * @param ctx the parse tree
+	 */
+	void enterRead_expression(MyLangParser.Read_expressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MyLangParser#read_expression}.
+	 * @param ctx the parse tree
+	 */
+	void exitRead_expression(MyLangParser.Read_expressionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MyLangParser#primitive_type}.
 	 * @param ctx the parse tree
 	 */

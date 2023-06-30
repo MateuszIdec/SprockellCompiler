@@ -256,6 +256,13 @@ public class MyLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitRead_expression(MyLangParser.Read_expressionContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

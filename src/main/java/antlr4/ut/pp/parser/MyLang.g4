@@ -9,8 +9,8 @@ compound_statement: '{' body '}';
 
 expression_statement: expression? ';';
 
-expression: assignment_expr | fork_expression | get_thread_id_expression;
-assignment_expr: IDENTIFIER assignment_operator logical_and_expression | logical_or_expression;
+expression: assignment_expr | read_expression | fork_expression | get_thread_id_expression;
+assignment_expr: IDENTIFIER assignment_operator  read_expression | logical_and_expression | logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
 logical_and_expression: relational_expr ('&&' relational_expr)*;
 relational_expr: additive_expr (relational_operator additive_expr)*;
@@ -47,6 +47,7 @@ var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';';
 print_statement: 'print' expression ';';
+read_expression: 'read';
 
 primitive_type: INT | BOOL;
 compound_type: array | STRING;
