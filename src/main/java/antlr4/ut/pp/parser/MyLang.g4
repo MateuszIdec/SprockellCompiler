@@ -38,7 +38,7 @@ fork_expression: FORK compound_statement;
 get_thread_id_expression: TID;
 join_statement: JOIN expression;
 
-lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
+lock_statement: LOCK var_call | UNLOCK var_call;
 
 definition_statement: var_def | func_def;
 
