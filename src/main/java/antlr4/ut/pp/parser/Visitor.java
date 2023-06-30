@@ -106,12 +106,13 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             return attrs;
         }
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
+
         int address = memoryManager.createNewVariable(TID , 1);
         ArrayList<String> currentCode = code.get(TID);
+        currentCode.add("Pop regA");
 
-        String loadInstruction = "Store " + RHSattrs.regName + " (DirAddr " + address + ")";
-        currentCode.add(loadInstruction);
-        memoryManager.deallocateRegister(TID, RHSattrs.regName);
+        String storeInstruction = "Store regA (DirAddr " + address + ")";
+        currentCode.add(storeInstruction);
 
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
@@ -125,17 +126,17 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return attrs;
     }
 
-    @Override
-    public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
-        Attrs attrs = new Attrs();
-        int TID = symbolTables.size() - 1;
-        String allocatedReg = memoryManager.allocateRegister(TID);
-        String putValueIntoRegInstruction = "Load (ImmValue " + TID +") " + allocatedReg;
-        code.get(TID).add(putValueIntoRegInstruction);
-        attrs.type = Type.INT;
-        attrs.regName = allocatedReg;
-        return attrs;
-    }
+//    @Override
+//    public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
+//        Attrs attrs = new Attrs();
+//        int TID = symbolTables.size() - 1;
+//        String allocatedReg = memoryManager.allocateRegister(TID);
+//        String putValueIntoRegInstruction = "Load (ImmValue " + TID +") " + allocatedReg;
+//        code.get(TID).add(putValueIntoRegInstruction);
+//        attrs.type = Type.INT;
+//        attrs.regName = allocatedReg;
+//        return attrs;
+//    }
 
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
@@ -186,8 +187,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 attrs.type = Type.ERROR;
             }
             else {
+                ArrayList<String> currCode = code.get(TID);
+
                 int memoryAddress = symbolTables.get(TID).getAddress(attrs.name);
-                String storeNewValueInVarMemAddress = "Store " + value.regName + " " + "(DirAddr " + memoryAddress + ")";
+                currCode.add("Pop regA");
+
+                String storeNewValueInVarMemAddress = "Store regA (DirAddr " + memoryAddress + ")";
                 code.get(TID).add(storeNewValueInVarMemAddress);
             }
         }
@@ -250,11 +255,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             int TID = symbolTables.size()-1;
             ArrayList<String> currCode = code.get(TID);
             Attrs expression = visit(ctx.getChild(1));
-            currCode.add("Compute Equal " + expression.regName + " reg0" + " " + expression.regName);
+            currCode.add("Pop regA");
+            currCode.add("Compute Equal regA reg0 regA");
             int currentInstructionNr = currCode.size();
-            String branchInstruction = "Branch " + expression.regName + " ";
+            String branchInstruction = "Branch regA ";
             currCode.add(branchInstruction);
-            memoryManager.deallocateRegister(TID, expression.regName);
             Attrs compoundStatement = visit(ctx.getChild(2));
             int instructionNrAfterIfBody = currCode.size();
             int label = instructionNrAfterIfBody - currentInstructionNr;
@@ -372,16 +377,15 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         // find its corresponding address
         // load value from found address and put it into newly allocated register
         if(symbolTables.get(TID).contains(attrs.name)) {
+            ArrayList<String> currCode = code.get(TID);
             SymbolTable st = symbolTables.get(TID);
             int address = st.getAddress(attrs.name);
-            String allocatedRegister = memoryManager.allocateRegister(TID);
 
             attrs.type = st.getType(attrs.name);
-            attrs.regName = allocatedRegister;
 
-            String loadInstruction = "Load (DirAddr " + address + ") " + allocatedRegister;
-            code.get(TID).add(loadInstruction);
-
+            String loadInstruction = "Load (DirAddr " + address + ") regA";
+            currCode.add(loadInstruction);
+            currCode.add("Push regA");
         }
         else
         {
@@ -408,11 +412,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 primitiveTypeValue = "1";
         }
         ArrayList<String> currentCode = code.get(TID);
-        String allocatedReg = memoryManager.allocateRegister(TID);
-        String putValueIntoRegInstruction = "Load (ImmValue " + primitiveTypeValue +") " + allocatedReg;
+        String putValueIntoRegInstruction = "Load (ImmValue " + primitiveTypeValue +") regA";
         currentCode.add(putValueIntoRegInstruction);
-        attrs.regName = allocatedReg;
-
+        currentCode.add("Push regA");
         return attrs;
     }
 
@@ -504,10 +506,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int startOfWhile = currCode.size();
         Attrs expression = visit(ctx.getChild(1));
         int branchInstructionNr = currCode.size();
-        currCode.add("Compute Equal " + expression.regName + " reg0" + " " + expression.regName);
-        String branchInstruction = "Branch " + expression.regName + " ";
-        memoryManager.deallocateRegister(TID, expression.regName);
-
+        currCode.add("Pop regA");
+        currCode.add("Compute Equal regA reg0 regA");
+        String branchInstruction = "Branch regA ";
         currCode.add(branchInstruction);
         Attrs compoundStatement = visit(ctx.getChild(2));
         String jumpInstruction = "Jump (Abs " + startOfWhile + ")";
@@ -515,7 +516,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
         int instructionNrAfterBody = currCode.size();
         branchInstruction += "( Abs " + instructionNrAfterBody + " )";
-        currCode.set(branchInstructionNr + 1, branchInstruction);
+        currCode.set(branchInstructionNr + 2, branchInstruction);
         return null;
     }
 
@@ -653,10 +654,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 error_vector.add(error);
                 System.err.println(error.getText());
             }
-            String instr = "Compute " + operationCode + LHS.regName + " " + RHS.regName + " " + RHS.regName;
+            curr_code.add("Pop regB");
+            curr_code.add("Pop regA");
+            String instr = "Compute " + operationCode + "regA regB regA";
             curr_code.add(instr);
-
-            memoryManager.deallocateRegister(TID, LHS.regName);
+            curr_code.add("Push regA");
 
             LHS = RHS;
         }
@@ -678,17 +680,19 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int TID = symbolTables.size()-1;
 
         Attrs attrs = visit(ctx.getChild(1));
-        // Check if the expression to be printed is in register or in memory
-        if(attrs.regName != null) {
-            String writeInstr = "WriteInstr " + attrs.regName + " numberIO";
-            code.get(TID).add(writeInstr);
-        }
-        else {
+        if(attrs.type == Type.ERROR)
+        {
             attrs.type = Type.ERROR;
             System.err.println("Print statement received expression with no regName specified");
+            return attrs;
         }
+        // Check if the expression to be printed is in register or in memory
+        ArrayList<String> curr_code =  code.get(TID);
+        curr_code.add("Pop regA");
+        String writeInstr = "WriteInstr regA numberIO";
+        curr_code.add(writeInstr);
         return attrs;
     }
-
+    
 }
 // Dont forget to regenerate ANTLR grammar
