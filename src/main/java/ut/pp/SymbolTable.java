@@ -61,7 +61,7 @@ public class SymbolTable {
         return Objects.requireNonNull(getSymbol(id)).isShared;
     }
 
-    private Symbol getSymbol(String id)
+    public Symbol getSymbol(String id)
     {
         int depth = symbolStack.size()-1;
         while(depth >= 0)
