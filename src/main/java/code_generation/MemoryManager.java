@@ -12,7 +12,7 @@ public class MemoryManager {
     private ArrayList<LocalMemoryManager> localMemoryManagers = new ArrayList<>();
 
     public MemoryManager() {
-        for(int i = GLOBAL_MEMORY_SIZE; i >=0 ; i--)
+        for(int i = GLOBAL_MEMORY_SIZE-1; i >=0 ; i--)
         {
             freeGlobalMemoryAddresses.push(i);
         }
@@ -21,7 +21,7 @@ public class MemoryManager {
     private class  LocalMemoryManager
     {
         int LOCAL_MEMORY_SIZE = 32;
-        String[] registers = {"regA", "regB", "regC", "regD", "regD", "regE", "regF"};
+        String[] registers = {"regA", "regB", "regC", "regD", "regE", "regF"};
         private int currentRegisterIndex = 0;
         private int currLocalIndex = 0;
         ArrayList<String> currRegisters = new ArrayList<>(); // List of registers that are currently being used
@@ -83,7 +83,7 @@ public class MemoryManager {
 
     public int allocateGlobalVariable() throws Exception
     {
-        if(freeGlobalMemoryAddresses.size() != 0)
+        if(freeGlobalMemoryAddresses.size() >= 1)
             return freeGlobalMemoryAddresses.pop();
         throw new Exception();
     }

@@ -2,6 +2,7 @@ package antlr4.ut.pp.parser;
 
 import errors.CompilerError;
 import code_generation.MemoryManager;
+import errors.OutOfMemoryError;
 import errors.RedefinitonError;
 import errors.NameNotFoundError;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -87,6 +88,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
+        ArrayList<String> currCode = code.get(TID);
 
         if(ctx.getChild(0).getText().equals("shared")) {
             symbol.isShared = true;
@@ -106,14 +108,29 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             return attrs;
         }
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
+        int address;
+        if(sharedVarCase == 1)
+        {
+            try {
+                address = memoryManager.allocateGlobalVariable();
+            }catch (Exception e)
+            {
+                error_vector.add(new OutOfMemoryError(ctx, new Attrs()));
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+            currCode.add("Pop regA");
+            currCode.add("WriteInstr regA (DirAddr "+ address + ")");
 
-        int address = memoryManager.createNewVariable(TID , 1);
-        ArrayList<String> currentCode = code.get(TID);
-        currentCode.add("Pop regA");
+        }
+        else {
+            address = memoryManager.createNewVariable(TID, 1);
+            ArrayList<String> currentCode = code.get(TID);
+            currentCode.add("Pop regA");
 
-        String storeInstruction = "Store regA (DirAddr " + address + ")";
-        currentCode.add(storeInstruction);
-
+            String storeInstruction = "Store regA (DirAddr " + address + ")";
+            currentCode.add(storeInstruction);
+        }
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
@@ -124,6 +141,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         symbolTable.add(attrs.name, symbol);
         System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
+
+
     }
 
 //    @Override
@@ -385,19 +404,18 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         int TID = symbolTables.size() - 1;
         attrs.name = ctx.getText();
-
+        SymbolTable st = symbolTables.get(TID);
         // check whether var name in scope
         // find its corresponding address
         // load value from found address and put it into newly allocated register
-        if(symbolTables.get(TID).contains(attrs.name)) {
+        if(st.contains(attrs.name)) {
             ArrayList<String> currCode = code.get(TID);
-            SymbolTable st = symbolTables.get(TID);
             int address = st.getAddress(attrs.name);
-
             attrs.type = st.getType(attrs.name);
-
-            String loadInstruction = "Load (DirAddr " + address + ") regA";
-            currCode.add(loadInstruction);
+            if(st.isShared(attrs.name))
+                currCode.add("ReadInstr (DirAddr "+ address +")");
+            else
+                currCode.add("Load (DirAddr " + address + ") regA");
             currCode.add("Push regA");
         }
         else
