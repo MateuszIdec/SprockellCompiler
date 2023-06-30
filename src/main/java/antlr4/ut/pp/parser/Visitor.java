@@ -47,7 +47,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
         memoryManager.createNewLocalMemoryManager();
         code.add(new ArrayList<>());
-        int TID = symbolTables.size()-1;
+        int TID = this.TID;
 
         try {
             ArrayList<String> currCode = code.get(TID);
@@ -91,7 +91,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
-        int TID = symbolTables.size() - 1 ;
+        int TID = this.TID ;
         SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
@@ -173,7 +173,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
-        int TID = symbolTables.size() - 1;
+        int TID = this.TID;
 
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 1) {
@@ -251,7 +251,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs;
-        int TID = symbolTables.size() - 1;
+        int TID = this.TID;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -268,7 +268,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs attrs = new Attrs();
         // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
-            int TID = symbolTables.size()-1;
+            int TID = this.TID;
             ArrayList<String> currCode = code.get(TID);
             Attrs expression = visit(ctx.getChild(1));
             currCode.add("Pop regA");
@@ -386,7 +386,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitRead_expression(MyLangParser.Read_expressionContext ctx) {
 
-        int TID = symbolTables.size()-1;
+        int TID = this.TID;
         ArrayList<String> currCode = code.get(TID);
         currCode.add("ReadInstr numberIO");
         currCode.add("Receive regA");
@@ -399,7 +399,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        int TID = symbolTables.size()-1;
+        int TID = this.TID;
         SymbolTable st = symbolTables.get(TID);
         attrs.type = Type.FORK;
         ArrayList<String> currCode = code.get(TID);
@@ -412,7 +412,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
-        int TID = symbolTables.size() - 1;
+        int TID = this.TID;
         attrs.name = ctx.getText();
         SymbolTable st = symbolTables.get(TID);
         // check whether var name in scope
@@ -542,7 +542,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
         // TODO check what attributes should be in if statement, maybe visit while, for and if just for code gen?
-        int TID = symbolTables.size()-1;
+        int TID = this.TID;
         ArrayList<String> currCode = code.get(TID);
         int startOfWhile = currCode.size();
         Attrs expression = visit(ctx.getChild(1));
@@ -582,7 +582,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitFork_expression(MyLangParser.Fork_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        int currTID = symbolTables.size()-1;
+        int currTID = this.TID;
         ArrayList<String> currCode = code.get(TID);
         int newThreadIsRunningAddress = -1 ;
         try {
@@ -603,11 +603,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             String updateGlobalVar = "WriteInstr regA (DirAddr "+ newThreadIsRunningAddress + ")";
             newThreadCode.add(loadOneToReg);
             newThreadCode.add(updateGlobalVar);
-            visit(ctx.getChild(1));
+            visit(ctx.compound_statement());
             String epilog = "WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")";
             newThreadCode.add(epilog);
             newThreadCode.add("EndProg");
-            TID = currTID;
+            this.TID = currTID;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -632,6 +632,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
+        // check whether the
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         Attrs attrs = new Attrs();
 
@@ -748,7 +749,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitPrint_statement(MyLangParser.Print_statementContext ctx) {
-        int TID = symbolTables.size()-1;
+        int TID = this.TID;
 
         Attrs attrs = visit(ctx.getChild(1));
         if(attrs.type == Type.ERROR)
