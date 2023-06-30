@@ -45,8 +45,8 @@ definition_statement: var_def | func_def;
 func_def: 'fn' IDENTIFIER '(' parameters ')' '{' body '}';
 var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
 
-return_statement: 'return' expression ';' ;
-print_statement: 'print' expression;
+return_statement: 'return' expression ';';
+print_statement: 'print' expression ';';
 
 primitive_type: INT | BOOL;
 compound_type: array | STRING;
