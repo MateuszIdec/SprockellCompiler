@@ -1,0 +1,39 @@
+
+
+
+shared var lock0 = False;
+shared var lock1 = False;
+
+shared var turn = 0;
+
+var thread0 = fork {
+        lock0 = True;
+        turn = 1;
+        while (lock1 == True && turn == 1)
+        {
+            // busy wait
+            ;
+        }
+        // critical section
+
+        // end of critical section
+        lock0 = False;
+};
+var thread1 = fork {
+        lock1 = True;
+        turn = 0;
+        while (lock0 == True && turn == 0)
+        {
+            // busy wait
+            ;
+        }
+        // critical section
+
+        // end of critical section
+        lock1 = False;
+};
+
+join thread1;
+join thread0;
+
+print 999;
