@@ -37,6 +37,7 @@ public class MemoryManager {
                     String reg = registers[currentRegisterIndex];
                     currentRegisterIndex++;
                     currRegisters.add(reg);
+                    System.out.println("[REG] " + reg  + " allocated");
                     return reg;
                 }
                 else
@@ -46,6 +47,7 @@ public class MemoryManager {
             }
             else
             {
+                System.out.println("[REG] " + deallocatedRegisters.peek()  + " allocated");
                 return deallocatedRegisters.pop();
             }
             return null;
@@ -53,6 +55,7 @@ public class MemoryManager {
         public void deallocateRegister(String regName)
         {
             // maybe add check the regName in registers
+            System.out.println("[REG] "+ regName + " deallocated");
             deallocatedRegisters.push(regName);
         }
         public int createNewVariable(int size) throws OutOfMemoryError
