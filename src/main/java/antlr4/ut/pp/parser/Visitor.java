@@ -25,9 +25,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
      */
     public ArrayList<String> getCode() {
         ArrayList<String> result = new ArrayList<>();
-
+        int i = 0;
         for(ArrayList<String> threadCode : code) {
-            result.add("prog = " + threadCode.toString());
+            result.add("prog"+(i++)+" = " + threadCode.toString());
         }
         return result;
     }
@@ -587,6 +587,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         int newThreadIsRunningAddress = -1 ;
         try {
             newThreadIsRunningAddress = memoryManager.allocateGlobalVariable();
+            memoryManager.createNewLocalMemoryManager();
             SymbolTable newST = symbolTables.get(TID).deepCopy();
             Symbol newTID = new Symbol();
             newTID.isShared = false;
