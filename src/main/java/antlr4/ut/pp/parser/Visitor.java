@@ -753,10 +753,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                     operationCode = "Lt ";
                     break;
                 case "||":
-                    operationCode = "And ";
+                    operationCode = "Or ";
                     break;
                 case "&&":
-                    operationCode = "Or ";
+                    operationCode = "And ";
                     break;
             }
             RHS = visit(ctx.getChild(i));
