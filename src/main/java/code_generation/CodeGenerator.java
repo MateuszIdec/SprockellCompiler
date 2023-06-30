@@ -33,7 +33,7 @@ public class CodeGenerator {
             result.append(prettyCode(threadCode) + "\n\n");
             threadCount++;
         }
-        result.append("\n\nmain = [");
+        result.append("\n\nmain = run [");
         for (int id = 0; id < threadCount; id++){
             result.append("prog" + id);
             if(id != threadCount - 1)
