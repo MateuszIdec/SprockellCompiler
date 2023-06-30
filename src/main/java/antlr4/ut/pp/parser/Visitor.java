@@ -203,13 +203,16 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 attrs.type = Type.ERROR;
             }
             else {
+
                 ArrayList<String> currCode = code.get(TID);
+                SymbolTable st = symbolTables.get(TID);
+                Symbol s = st.getSymbol(attrs.name);
 
-                int memoryAddress = symbolTables.get(TID).getAddress(attrs.name);
                 currCode.add("Pop regA");
-
-                String storeNewValueInVarMemAddress = "Store regA (DirAddr " + memoryAddress + ")";
-                code.get(TID).add(storeNewValueInVarMemAddress);
+                if(s.isShared == true)
+                    currCode.add("WriteInstr regA (DirAddr " + s.address + ")");
+                else
+                    currCode.add("Store regA (DirAddr " + s.address + ")");
             }
         }
         return attrs;
@@ -422,8 +425,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             ArrayList<String> currCode = code.get(TID);
             int address = st.getAddress(attrs.name);
             attrs.type = st.getType(attrs.name);
-            if(st.isShared(attrs.name))
+            if(st.isShared(attrs.name)){
                 currCode.add("ReadInstr (DirAddr "+ address +")");
+                currCode.add("Receive regA");
+            }
             else
                 currCode.add("Load (DirAddr " + address + ") regA");
             currCode.add("Push regA");
@@ -440,7 +445,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) {
-        int TID = symbolTables.size() -1;
+        int TID = this.TID;
         Attrs attrs = new Attrs();
 
         String primitiveTypeValue = "0";
@@ -599,21 +604,24 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             code.add(newThreadCode);
             TID = threadCounter;
             threadCounter ++;
-            String loadOneToReg = "Load (ImmValue 1) regA";
-            String updateGlobalVar = "WriteInstr regA (DirAddr "+ newThreadIsRunningAddress + ")";
-            newThreadCode.add(loadOneToReg);
-            newThreadCode.add(updateGlobalVar);
+
+            newThreadCode.add("ReadInstr (DirAddr "+ newThreadIsRunningAddress + ")");
+            newThreadCode.add("Receive regA");
+            newThreadCode.add("Compute Equal regA reg0 regA");
+            newThreadCode.add("Branch regA (Rel (-3))");
             visit(ctx.compound_statement());
-            String epilog = "WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")";
-            newThreadCode.add(epilog);
+            newThreadCode.add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")");
             newThreadCode.add("EndProg");
+
             this.TID = currTID;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         attrs.type = Type.FORK;
         currCode.add("Load (ImmValue "+ newThreadIsRunningAddress +") regA");
-        currCode.add("Pop regA");
+        currCode.add("Push regA");
+        currCode.add("Load (ImmValue 1) regA");
+        currCode.add("WriteInstr " + "regA " +  "(DirAddr "+ newThreadIsRunningAddress + ")");
         return attrs;
     }
 
@@ -627,40 +635,77 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             System.err.println(error.getText());
             error_vector.add(error);
         }
-        return fork;
+        int TID = this.TID;
+        SymbolTable symbolTable = symbolTables.get(TID);
+        Attrs attrs = new Attrs();
+        ArrayList<String> currCode = code.get(TID);
+        currCode.add("Pop regA");
+        currCode.add("ReadInstr (IndAddr regA)");
+        currCode.add("Receive regB");
+        currCode.add("Branch regB (Rel (-2))");
+
+        return null;
     }
 
     @Override
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
-        // check whether the
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
+        int TID = this.TID;
+        SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
-
-        attrs.name = ctx.getChild(1).getText();
-
-        // If identifier not found in all scopes then add new error
-        if(symbolTable.contains(attrs.name)) {
-            attrs.type = symbolTable.getType(attrs.name);
+        ArrayList<String> currCode = code.get(TID);
+        String lockVarName = ctx.IDENTIFIER().getText();
+        if(symbolTable.contains(lockVarName))
+        {
+            Symbol s = symbolTable.getSymbol(lockVarName);
+            if (s.type == Type.BOOL && s.isShared == true)
+            {
+                if(ctx.LOCK() != null)
+                {
+                    currCode.add("TestAndSet (DirAddr "+ s.address +")");
+                    currCode.add("Receive regA");
+                    currCode.add("Compute Equal regA reg0 regA");
+                    currCode.add("Branch regA (Rel (-3))");
+                }
+                else
+                {
+                    currCode.add("WriteInstr reg0 (DirAddr "+ s.address +")");
+                }
+            }
+            else
+            {
+                // Type error;
+            }
         }
         else
         {
-            attrs.type = Type.ERROR;
-            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-            error_vector.add(error);
-            System.err.println(error.getText());
+            // Name not found error;
         }
-
-        if(attrs.type == Type.FORK)
-        {
-            TypeError error = new TypeError(ctx, attrs, Type.INT);
-            System.err.println(error.getText());
-            error_vector.add(error);
-        }
+//         attrs.name = ctx.getChild(1).getText();
+//
+//        // If identifier not found in all scopes then add new error
+//        if(symbolTable.contains(attrs.name)) {
+//            attrs.type = symbolTable.getType(attrs.name);
+//        }
+//        else
+//        {
+//            attrs.type = Type.ERROR;
+//            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+//            error_vector.add(error);
+//            System.err.println(error.getText());
+//        }
+//
+//        if(attrs.type == Type.FORK)
+//        {
+//            TypeError error = new TypeError(ctx, attrs, Type.INT);
+//            System.err.println(error.getText());
+//            error_vector.add(error);
+//        }
         return attrs;
     }
 
+
     private Type getType(Attrs attrs){
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
+        SymbolTable symbolTable = symbolTables.get(this.TID);
         if (attrs.name != null)
             return symbolTable.getType(attrs.name);
         return attrs.type;
