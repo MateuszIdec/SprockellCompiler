@@ -36,7 +36,7 @@ public class CodeGenerator {
         result.append("\n\nmain = [");
         for (int id = 0; id < threadCount; id++){
             result.append("prog" + id);
-            if(id != threadCount)
+            if(id != threadCount - 1)
                 result.append(",");
             else
                 result.append("]");
