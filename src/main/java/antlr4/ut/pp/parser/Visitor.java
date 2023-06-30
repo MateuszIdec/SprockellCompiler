@@ -368,6 +368,19 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
     @Override
+    public Attrs visitRead_expression(MyLangParser.Read_expressionContext ctx) {
+
+        int TID = symbolTables.size()-1;
+        ArrayList<String> currCode = code.get(TID);
+        currCode.add("ReadInstr numberIO");
+        currCode.add("Receive regA");
+        currCode.add("Push regA");
+        Attrs attrs = new Attrs();
+        attrs.type = Type.INT;
+        return attrs;
+    }
+
+    @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
         int TID = symbolTables.size() - 1;
