@@ -30,11 +30,11 @@ public class CodeGenerator {
         int threadCount = 0;
         result.append("module Main where \n\nimport Sprockell \n\n");
         for(String threadCode : code) {
-            result.append(prettyCode(threadCode));
+            result.append(prettyCode(threadCode) + "\n\n");
             threadCount++;
         }
         result.append("\n\nmain = [");
-        for (int id = 0; id <= threadCount; id++){
+        for (int id = 0; id < threadCount; id++){
             result.append("prog" + id);
             if(id != threadCount)
                 result.append(",");
