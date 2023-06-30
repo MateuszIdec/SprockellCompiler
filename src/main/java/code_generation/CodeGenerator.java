@@ -16,7 +16,7 @@ import java.nio.file.Path;
 
 public class CodeGenerator {
 
-    public static ArrayList<String> generateCode(String text, boolean consolePrint)
+    public static String generateCode(String text, boolean consolePrint)
     {
         Visitor visitor = new Visitor();
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
@@ -25,15 +25,28 @@ public class CodeGenerator {
         ParseTree tree = parser.module();
         visitor.visit(tree);
         ArrayList<String> code = visitor.getCode();
-        ArrayList<String> result = new ArrayList<>();
+        StringBuilder result = new StringBuilder();
 
+        int threadCount = 0;
+        result.append("module Main where \n\nimport Sprockell \n\n");
         for(String threadCode : code) {
-            result.add("module Main where \n\nimport Sprockell \n\nprog::[Instruction] \n"
-                    + prettyCode(threadCode) + "\n\nmain = run [prog]");
+            result.append(prettyCode(threadCode));
+            threadCount++;
         }
-        if(consolePrint)
-            System.out.println(prettyCodeWithLineNumbers(visitor.getCode(0)));
-        return result;
+        result.append("\n\nmain = [");
+        for (int id = 0; id <= threadCount; id++){
+            result.append("prog" + id);
+            if(id != threadCount)
+                result.append(",");
+            else
+                result.append("]");
+        }
+        if(consolePrint){
+            for(String threadCode : code) {
+                System.out.println(prettyCodeWithLineNumbers(threadCode));
+            }
+        }
+        return result.toString();
     }
 
     public static boolean compileFile(String input, String output, boolean consolePrint) throws IOException {
@@ -43,7 +56,7 @@ public class CodeGenerator {
         String result = new String(Files.readAllBytes(inputPath));
 
         File outputFile = new File(outputPath.toString());
-        String code = generateCode(result, consolePrint).get(0);
+        String code = generateCode(result, consolePrint);
         FileWriter fileWriter = new FileWriter(outputFile);
         fileWriter.write(code);
         fileWriter.close();
