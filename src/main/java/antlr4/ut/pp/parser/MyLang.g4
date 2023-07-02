@@ -20,7 +20,7 @@ postfix_expr: atomic_expr | postfix_expr '[' expression ']' | postfix_expr'(' ar
 atomic_expr: get_thread_id_expression | var_call | read_expression | '(' expression ')' | primitive_type | compound_type | fork_expression;
 var_call: IDENTIFIER;
 
-assignment_operator: '=' | '+=' | '-=' | '*=';
+assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
 additive_operator: '+' | '-';
 multi_operator: '*';
@@ -40,9 +40,8 @@ join_statement: JOIN expression;
 
 lock_statement: LOCK IDENTIFIER | UNLOCK IDENTIFIER;
 
-definition_statement: var_def | func_def;
+definition_statement: var_def;
 
-func_def: 'fn' IDENTIFIER '(' parameters ')' '{' body '}';
 var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
 
 return_statement: 'return' expression ';';

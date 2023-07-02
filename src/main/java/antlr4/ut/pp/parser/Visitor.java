@@ -23,7 +23,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     /**
      * @return code for all threads
      */
-
     public ArrayList<ArrayList<String>> getCode() {
         return code;
     }
@@ -60,17 +59,13 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return null;
     }
 
-
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
         SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
         boolean is_parent_for_loop = false;
-//        if(ctx.getParent().getParent() instanceof MyLangParser.For_statementContext)
-//            is_parent_for_loop = true;
         System.out.println("Entering scope");
         if(!is_parent_for_loop)
             symbolTable.openScope();
-
 
         for (int i = 0 ; i< ctx.getChildCount();i++)
             visit(ctx.getChild(i));
@@ -461,18 +456,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitDefinition_statement(MyLangParser.Definition_statementContext ctx) {
         return visit(ctx.getChild(0));
-    }
-
-    @Override
-    public Attrs visitFunc_def(MyLangParser.Func_defContext ctx) {
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
-        // TODO add name to symbolTable
-        symbolTable.openScope();
-        Attrs name = visit(ctx.getChild(1));
-        Attrs pars = visit(ctx.getChild(3));
-        Attrs body = visit(ctx.getChild(6));
-        symbolTable.closeScope();
-        return new Attrs();
     }
 
     @Override
