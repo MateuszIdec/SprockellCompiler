@@ -166,7 +166,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 Symbol s = st.getSymbol(attrs.name);
 
                 currCode.add("Pop regA");
-                if(s.isShared == true)
+                if(s.isShared)
                     currCode.add("WriteInstr regA (DirAddr " + s.address + ")");
                 else
                     currCode.add("Store regA (DirAddr " + s.address + ")");
@@ -185,6 +185,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -198,6 +199,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitLogical_and_expression(MyLangParser.Logical_and_expressionContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -211,6 +213,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -225,6 +228,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
         // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
+
         // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
             int TID = this.TID;
