@@ -5,7 +5,7 @@ import code_generation.Attrs;
 import code_generation.Type;
 
 public class TypeError extends CompilerError{
-    Type expected_type;
+    Type expected_type = null;
     public TypeError(ParserRuleContext ctx, Attrs name,Attrs value) {
         super(ctx, name);
          this.expected_type = value.type;
@@ -14,6 +14,9 @@ public class TypeError extends CompilerError{
     public TypeError(ParserRuleContext ctx, Attrs name,Type type) {
         super(ctx, name);
         this.expected_type = type;
+    }
+    public TypeError(ParserRuleContext ctx, Attrs name) {
+        super(ctx, name);
     }
 
     @Override
