@@ -1,4 +1,4 @@
-// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
+// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -67,16 +67,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpression(MyLangParser.ExpressionContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#assignment_expr}.
-	 * @param ctx the parse tree
-	 */
-	void enterAssignment_expr(MyLangParser.Assignment_exprContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#assignment_expr}.
-	 * @param ctx the parse tree
-	 */
-	void exitAssignment_expr(MyLangParser.Assignment_exprContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#logical_or_expression}.
 	 * @param ctx the parse tree
@@ -218,16 +208,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitWhile_statement(MyLangParser.While_statementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#for_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterFor_statement(MyLangParser.For_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#for_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitFor_statement(MyLangParser.For_statementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MyLangParser#if_statement}.
 	 * @param ctx the parse tree
 	 */
@@ -298,16 +278,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitLock_statement(MyLangParser.Lock_statementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#definition_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterDefinition_statement(MyLangParser.Definition_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#definition_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitDefinition_statement(MyLangParser.Definition_statementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MyLangParser#var_def}.
 	 * @param ctx the parse tree
 	 */
@@ -377,26 +347,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#parameters}.
-	 * @param ctx the parse tree
-	 */
-	void enterParameters(MyLangParser.ParametersContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#parameters}.
-	 * @param ctx the parse tree
-	 */
-	void exitParameters(MyLangParser.ParametersContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#parameter}.
-	 * @param ctx the parse tree
-	 */
-	void enterParameter(MyLangParser.ParameterContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#parameter}.
-	 * @param ctx the parse tree
-	 */
-	void exitParameter(MyLangParser.ParameterContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#args}.
 	 * @param ctx the parse tree

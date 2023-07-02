@@ -1,5 +1,7 @@
-package antlr4.ut.pp.parser;
+package code_generation;
 
+import antlr4.ut.pp.parser.MyLangBaseVisitor;
+import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.*;
 import errors.*;
 import errors.OutOfMemoryError;
@@ -9,7 +11,7 @@ import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class Visitor extends MyLangBaseVisitor <Attrs> {
+public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Vector<CompilerError> errorVector = new Vector<>();
     public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
     ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
@@ -146,7 +148,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             Attrs value = visit(ctx.getChild(2));
             attrs.name =  ctx.getChild(0).getText();
 
-            if(!symbolTables.get(TID).contains(attrs.name)) {
+            if(!currSymbolTable.contains(attrs.name)) {
                 attrs.type = Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
                 System.err.println(error.getText());
@@ -364,9 +366,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.type = Type.FORK;
+        attrs.type = Type.INT;
         int address = currSymbolTable.getAddress("TID");
-        currCode.add("ReadInstr (DirAddr "+ address +")");
+        currCode.add("Load (ImmValue "+address+") regA");
         currCode.add("Push regA");
         return attrs;
     }

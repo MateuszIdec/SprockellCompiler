@@ -1,4 +1,4 @@
-// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
+// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -46,12 +46,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpression(MyLangParser.ExpressionContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#assignment_expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssignment_expr(MyLangParser.Assignment_exprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#logical_or_expression}.
 	 * @param ctx the parse tree
@@ -137,12 +131,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitWhile_statement(MyLangParser.While_statementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#for_statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFor_statement(MyLangParser.For_statementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MyLangParser#if_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -185,12 +173,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLock_statement(MyLangParser.Lock_statementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#definition_statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDefinition_statement(MyLangParser.Definition_statementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MyLangParser#var_def}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -232,18 +214,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#parameters}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParameters(MyLangParser.ParametersContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#parameter}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParameter(MyLangParser.ParameterContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#args}.
 	 * @param ctx the parse tree
