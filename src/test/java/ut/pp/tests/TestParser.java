@@ -5,25 +5,25 @@ import static org.junit.Assert.assertTrue;
 
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
-import antlr4.ut.pp.parser.Visitor;
+import code_generation.Visitor;
+import errors.LexerErrorListener;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
 import org.junit.Test;
 import errors.NameNotFoundError;
 import errors.TypeError;
 
-import java.util.BitSet;
 
 public class TestParser {
     static Visitor visitor;
     static MyLangParser parser;
+    static LexerErrorListener lexerErrorListener;
 
     @Before
     public void setup() {
         visitor = new Visitor();
+        lexerErrorListener = new LexerErrorListener();
     }
 
     /**
@@ -35,35 +35,13 @@ public class TestParser {
     public int parseString(String text) {
         visitor.errorVector.clear();
         visitor.symbolTables.clear();
+        lexerErrorListener.resetSyntaxErrorCount();
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
-        myLangLexer.addErrorListener(new ANTLRErrorListener() {
-            @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object o, int i, int i1, String s, RecognitionException e) {
-                System.out.println("A");
-            }
-
-            @Override
-            public void reportAmbiguity(Parser parser, DFA dfa, int i, int i1, boolean b, BitSet bitSet, ATNConfigSet atnConfigSet) {
-                System.out.println("B");
-
-            }
-
-            @Override
-            public void reportAttemptingFullContext(Parser parser, DFA dfa, int i, int i1, BitSet bitSet, ATNConfigSet atnConfigSet) {
-                System.out.println("C");
-
-            }
-
-            @Override
-            public void reportContextSensitivity(Parser parser, DFA dfa, int i, int i1, int i2, ATNConfigSet atnConfigSet) {
-                System.out.println("D");
-            }
-        });
+        myLangLexer.addErrorListener(lexerErrorListener);
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
-        System.out.println(parser.getNumberOfSyntaxErrors());
 
         visitor.visit(tree);
         System.out.println();
@@ -171,7 +149,7 @@ public class TestParser {
         String input = "var x = 0; x ?= 1;";
         parseString(input);
 
-        assertEquals(1, parser.getNumberOfSyntaxErrors());
+        assertEquals(1, lexerErrorListener.getSyntaxErrorsCount());
     }
     @Test
     public void testRelation()

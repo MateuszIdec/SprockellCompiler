@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
-import antlr4.ut.pp.parser.Visitor;
+import code_generation.Visitor;
 import code_generation.CodeGenerator;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
