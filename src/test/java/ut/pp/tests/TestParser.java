@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import antlr4.ut.pp.parser.Visitor;
-import errors.LexerErrorListener;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -21,7 +20,6 @@ import java.util.BitSet;
 public class TestParser {
     static Visitor visitor;
     static MyLangParser parser;
-    static LexerErrorListener lexerErrorListener;
 
     @Before
     public void setup() {
@@ -29,13 +27,13 @@ public class TestParser {
     }
 
     /**
-     * Clears the {@code visitor.error_vector} and then invokes {@code visitor.visit()} for a parse tree
+     * Clears the {@code visitor.errorVector} and then invokes {@code visitor.visit()} for a parse tree
      * generated from {@code text}
      * @param text string to parse
      * @return error count
      */
     public int parseString(String text) {
-        visitor.error_vector.clear();
+        visitor.errorVector.clear();
         visitor.symbolTables.clear();
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
@@ -69,7 +67,7 @@ public class TestParser {
 
         visitor.visit(tree);
         System.out.println();
-        return visitor.error_vector.size();
+        return visitor.errorVector.size();
     }
     @Test
     public void testSimplestExpression_statement()
@@ -108,7 +106,7 @@ public class TestParser {
         String input = "{var x = 0;} x = 1;";
 
         parseString(input);
-        assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
+        assertTrue(visitor.errorVector.get(0) instanceof NameNotFoundError);
 
         String input1 = "var x = 5; { var x = 3; }";
         assertEquals(0, parseString(input1));
@@ -120,7 +118,7 @@ public class TestParser {
         String input = "var x = 1; x = True;";
         parseString(input);
 
-        assertTrue(visitor.error_vector.get(0) instanceof TypeError);
+        assertTrue(visitor.errorVector.get(0) instanceof TypeError);
     }
     @Test
     public void testTypeErrorBool()
@@ -128,7 +126,7 @@ public class TestParser {
         String input = "var x = True; x = 1;";
         parseString(input);
 
-        assertTrue(visitor.error_vector.get(0) instanceof TypeError);
+        assertTrue(visitor.errorVector.get(0) instanceof TypeError);
     }
     @Test
     public void testManyNestedScopes()
@@ -143,7 +141,7 @@ public class TestParser {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} z = 1;";
         parseString(input);
 
-        assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
+        assertTrue(visitor.errorVector.get(0) instanceof NameNotFoundError);
     }
     @Test
     public void testScopes_and_type_error_order()
@@ -151,7 +149,7 @@ public class TestParser {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} z = False;";
         parseString(input);
 
-        assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
+        assertTrue(visitor.errorVector.get(0) instanceof NameNotFoundError);
     }
     @Test
     public void testAssignmentPlusEq()
