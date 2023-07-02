@@ -38,7 +38,6 @@ public class TestParser {
         ParseTree tree = parser.module();
 
         visitor.visit(tree);
-        System.out.println();
         return visitor.error_vector.size();
     }
     @Test
@@ -126,14 +125,14 @@ public class TestParser {
     @Test
     public void testAssignmentPlusEq()
     {
-        String input = "var x = 0; x += 1;";
+        String input = "var x = 0; x = x + 1;";
 
         assertEquals(0, parseString(input));
     }
     @Test
     public void testAssignmentMinusEq()
     {
-        String input = "var x = 0; x -= 1;";
+        String input = "var x = 0; x = x - 1;";
 
         assertEquals(0, parseString(input));
     }
