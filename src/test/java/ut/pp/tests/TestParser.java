@@ -6,16 +6,22 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import antlr4.ut.pp.parser.Visitor;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import errors.LexerErrorListener;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
 import org.junit.Test;
 import errors.NameNotFoundError;
 import errors.TypeError;
 
+import java.util.BitSet;
+
 public class TestParser {
     static Visitor visitor;
+    static MyLangParser parser;
+    static LexerErrorListener lexerErrorListener;
 
     @Before
     public void setup() {
@@ -33,11 +39,36 @@ public class TestParser {
         visitor.symbolTables.clear();
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
+        myLangLexer.addErrorListener(new ANTLRErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object o, int i, int i1, String s, RecognitionException e) {
+                System.out.println("A");
+            }
+
+            @Override
+            public void reportAmbiguity(Parser parser, DFA dfa, int i, int i1, boolean b, BitSet bitSet, ATNConfigSet atnConfigSet) {
+                System.out.println("B");
+
+            }
+
+            @Override
+            public void reportAttemptingFullContext(Parser parser, DFA dfa, int i, int i1, BitSet bitSet, ATNConfigSet atnConfigSet) {
+                System.out.println("C");
+
+            }
+
+            @Override
+            public void reportContextSensitivity(Parser parser, DFA dfa, int i, int i1, int i2, ATNConfigSet atnConfigSet) {
+                System.out.println("D");
+            }
+        });
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
-        MyLangParser parser = new MyLangParser(tokens);
+        parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
+        System.out.println(parser.getNumberOfSyntaxErrors());
 
         visitor.visit(tree);
+        System.out.println();
         return visitor.error_vector.size();
     }
     @Test
@@ -53,7 +84,7 @@ public class TestParser {
         String input = "var x = 0 {}";
         parseString(input);
 
-        // TODO Properly test this. ASK TA
+        assertEquals(2,parser.getNumberOfSyntaxErrors());
     }
     @Test
     public void testJustVariableDef()
@@ -142,7 +173,7 @@ public class TestParser {
         String input = "var x = 0; x ?= 1;";
         parseString(input);
 
-        // TODO Properly test this. ASK TA
+        assertEquals(1, parser.getNumberOfSyntaxErrors());
     }
     @Test
     public void testRelation()
@@ -158,12 +189,6 @@ public class TestParser {
 
         assertEquals(0, parseString(input));
     }
-//    @Test
-//    public void testForLoop() {
-//        String input = "var y = 0; for (y; x < 5; x += 1) { y+= 1; } ";
-//
-//        assertEquals(4, parseString(input));
-//    }
     @Test
     public void testFork() {
         String input = "var x = fork {var y = 0;}; y = 2; var z = 2; join z;";
@@ -173,8 +198,10 @@ public class TestParser {
     @Test
     public void testLock() {
         String input = "var x = fork { var y = 0;}; var y = 5; lock x;";
-
         assertEquals(1, parseString(input));
+
+        String input1 = "lock x;";
+        assertEquals(1, parseString(input1));
     }
     @Test
     public void testJoin() {
@@ -184,15 +211,17 @@ public class TestParser {
     }
     @Test
     public void testTid(){
-        String input = "var x = Tid;";
+        String input = "var x = Tid; x = 2;";
 
         assertEquals(0,parseString(input));
     }
     @Test
     public void testPrint() {
         String input = "var x = 5; print x + 2;";
-
         assertEquals(0, parseString(input));
+
+        String input1 = "print x;";
+        assertEquals(1, parseString(input1));
     }
     @Test
     public void testIf() {
