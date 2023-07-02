@@ -1,5 +1,7 @@
-package antlr4.ut.pp.parser;
+package code_generation;
 
+import antlr4.ut.pp.parser.MyLangBaseVisitor;
+import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.*;
 import errors.*;
 import errors.OutOfMemoryError;
@@ -9,7 +11,7 @@ import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class Visitor extends MyLangBaseVisitor <Attrs> {
+public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Vector<CompilerError> errorVector = new Vector<>();
     public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
     ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
