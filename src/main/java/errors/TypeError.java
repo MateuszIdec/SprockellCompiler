@@ -10,6 +10,7 @@ public class TypeError extends CompilerError{
         super(ctx, name);
          this.expected_type = value.type;
     }
+
     public TypeError(ParserRuleContext ctx, Attrs name,Type type) {
         super(ctx, name);
         this.expected_type = type;
@@ -17,6 +18,10 @@ public class TypeError extends CompilerError{
 
     @Override
     public String getText() {
-        return getErrorHeader() + " Type mismatch: variable \"" + attrs.name + "\" has a type " + attrs.type +", but has been assigned " + expected_type;
+        return getErrorHeader() + "Type mismatch: variable \"" + attrs.name + "\" has a type " + attrs.type +", but has been assigned " + expected_type;
+    }
+
+    public String getTextForLock() {
+        return getErrorHeader() + "Type mismatch: variable \"" + attrs.name +"\" has a type " + attrs.type + ", but lock statement doesn't allow this type";
     }
 }

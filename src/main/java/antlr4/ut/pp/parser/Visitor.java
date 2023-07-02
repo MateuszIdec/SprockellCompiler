@@ -543,7 +543,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return attrs;
     }
 
-
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
         // TODO check what attributes should be in if statement, maybe visit while, for and if just for code gen?
@@ -653,10 +652,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
         ArrayList<String> currCode = code.get(TID);
-        String lockVarName = ctx.IDENTIFIER().getText();
-        if(symbolTable.contains(lockVarName))
+        attrs.name = ctx.IDENTIFIER().getText();
+        if(symbolTable.contains(attrs.name))
         {
-            Symbol s = symbolTable.getSymbol(lockVarName);
+            Symbol s = symbolTable.getSymbol(attrs.name);
+            attrs.type = s.type;
             if (s.type == Type.BOOL && s.isShared == true)
             {
                 if(ctx.LOCK() != null)
@@ -673,7 +673,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             }
             else
             {
-                // Type error;
+                TypeError error = new TypeError(ctx, attrs, attrs);
+                error_vector.add(error);
+                System.err.println(error.getTextForLock());
             }
         }
         else
@@ -703,19 +705,20 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return attrs;
     }
 
-
     private Type getType(Attrs attrs){
         SymbolTable symbolTable = symbolTables.get(this.TID);
         if (attrs.name != null)
             return symbolTable.getType(attrs.name);
         return attrs.type;
     }
+
     private boolean are_compatible(Attrs attr1, Attrs attrs2)
     {
         //TODO improve
 
         return getType(attr1) == getType(attrs2);
     }
+
     private Attrs manyOperation(ParserRuleContext ctx)
     {
         int TID = symbolTables.size() -1;
@@ -781,11 +784,13 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         return LHS;
     }
+
     private boolean is_array_like(Attrs attrs)
     {
         // TODO impove;
         return attrs.type == Type.ARRAY  || attrs.type == Type.STRING;
     }
+
     private boolean is_int_like(Attrs attrs)
     {
         // TODO impove;
