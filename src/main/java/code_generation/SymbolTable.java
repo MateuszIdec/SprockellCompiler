@@ -10,6 +10,26 @@ public class SymbolTable {
         symbolStack.add(new HashMap<>());
     }
 
+    public static SymbolTable provideSymbolTableForFork(SymbolTable st, int TID)
+    {
+        SymbolTable newST = new SymbolTable();
+        newST.openScope();
+        Symbol tidSymbol = new Symbol();
+        tidSymbol.address = TID;
+        tidSymbol.type = Type.FORK;
+        tidSymbol.isShared = false;
+        newST.add("TID", tidSymbol);
+        for (Map<String, Symbol> scopeMap : st.symbolStack) {
+            for (Map.Entry<String, Symbol> entry : scopeMap.entrySet()) {
+                String key = entry.getKey();
+                Symbol value = entry.getValue().deepCopy();
+                if(value.isShared)
+                    newST.add(key, value.deepCopy());
+            }
+        }
+        return newST;
+    }
+
     public void openScope() {
         Map<String, Symbol> newScopeMap = new HashMap<>();
         symbolStack.addElement(newScopeMap);
@@ -121,9 +141,5 @@ public class SymbolTable {
         }
 
         return clonedSymbolTable;
-    }
-    public void updateTID(Symbol newSymbol)
-    {
-        symbolStack.get(0).put("TID", newSymbol);
     }
 }
