@@ -1,8 +1,8 @@
 package code_generation;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
-import antlr4.ut.pp.parser.Visitor;
 import errors.CompilerError;
+import errors.LexerErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -19,20 +19,26 @@ public class CodeGenerator {
 
     public static String generateCode(String text, boolean consolePrint) throws Exception {
         Visitor visitor = new Visitor();
+        LexerErrorListener lexerErrorListener = new LexerErrorListener();
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
+        myLangLexer.addErrorListener(lexerErrorListener);
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
 
+        // Check if there are any token recognition errors
+        if(lexerErrorListener.getSyntaxErrorsCount() > 0)
+            throw new Exception("Syntax error in lexer");
+
         // Check if there are any syntax errors
-        if(parser.getNumberOfSyntaxErrors() > 0) {
-            throw new Exception("Syntax error");
-        }
+        if(parser.getNumberOfSyntaxErrors() > 0)
+            throw new Exception("Syntax error in parser");
 
         visitor.visit(tree);
 
         // Check if there are any parsing errors
         if(visitor.errorVector.size() > 0) {
+            // Print all the errors
             for(CompilerError error : visitor.getErrorVector()) {
                 System.err.println(error.getText());
             }
