@@ -2,6 +2,7 @@ package code_generation;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import antlr4.ut.pp.parser.Visitor;
+import errors.CompilerError;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -31,9 +32,13 @@ public class CodeGenerator {
         visitor.visit(tree);
 
         // Check if there are any parsing errors
-        if(visitor.error_vector.size() > 0) {
+        if(visitor.errorVector.size() > 0) {
+            for(CompilerError error : visitor.getErrorVector()) {
+                System.err.println(error.getText());
+            }
             throw new Exception("Parsing error");
         }
+
         ArrayList<ArrayList<String>> code = visitor.getCode();
         StringBuilder result = new StringBuilder();
         ArrayList<String> finalCode = new ArrayList<>();

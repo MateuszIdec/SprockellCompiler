@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor <Attrs> {
-    public Vector<CompilerError> error_vector = new Vector<>();
+    public Vector<CompilerError> errorVector = new Vector<>();
     public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
     ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     public MemoryManager memoryManager = new MemoryManager();
@@ -25,6 +25,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
      */
     public ArrayList<ArrayList<String>> getCode() {
         return code;
+    }
+
+    public Vector<CompilerError> getErrorVector() {
+        return errorVector;
     }
 
     @Override
@@ -96,7 +100,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs.name = name;
 
             RedefinitonError error = new RedefinitonError(ctx, attrs);
-            error_vector.add(error);
+            errorVector.add(error);
             System.err.println(error.getText());
             return attrs;
         }
@@ -108,7 +112,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 address = memoryManager.allocateGlobalVariable();
             }catch (Exception e)
             {
-                error_vector.add(new OutOfMemoryError(ctx, new Attrs()));
+                errorVector.add(new OutOfMemoryError(ctx, new Attrs()));
                 attrs.type = Type.ERROR;
                 return attrs;
             }
@@ -172,7 +176,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 attrs.type = Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
                 System.err.println(error.getText());
-                error_vector.add(error);
+                errorVector.add(error);
                 return attrs;
             }
 
@@ -181,7 +185,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             if (!are_compatible(attrs ,value)) {
                 attrs.type = Type.INT;
                 TypeError error = new TypeError(ctx, attrs, value);
-                error_vector.add(error);
+                errorVector.add(error);
                 System.err.println(error.getText());
                 attrs.type = Type.ERROR;
             }
@@ -341,7 +345,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 if(!is_array_like(array_like))
                 {
                     TypeError error = new TypeError(ctx, array_like, Type.ARRAY); // TODO not only array but all arraylike
-                    error_vector.add(error);
+                    errorVector.add(error);
                     System.err.println(error.getText());
                 }
                 Attrs int_like = visit(ctx.getChild(2));
@@ -349,7 +353,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 {
                     // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
                     TypeError error = new TypeError(ctx, int_like, Type.INT); // TODO not only array but all arraylike
-                    error_vector.add(error);
+                    errorVector.add(error);
                     System.err.println(error.getText());
                 }
             }
@@ -421,7 +425,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
             attrs.type = Type.ERROR;
-            error_vector.add(error);
+            errorVector.add(error);
             System.err.println(error.getText());
         }
         return attrs;
@@ -604,7 +608,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         {
             TypeError error = new TypeError(ctx, fork, Type.FORK);
             System.err.println(error.getText());
-            error_vector.add(error);
+            errorVector.add(error);
         }
         int TID = this.TID;
         SymbolTable symbolTable = symbolTables.get(TID);
@@ -646,14 +650,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             else
             {
                 TypeError error = new TypeError(ctx, attrs, attrs);
-                error_vector.add(error);
+                errorVector.add(error);
                 System.err.println(error.getTextForLock());
             }
         }
         else
         {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-            error_vector.add(error);
+            errorVector.add(error);
             System.err.println(error.getText());
         }
 //         attrs.name = ctx.getChild(1).getText();
@@ -745,7 +749,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             if(!are_compatible(LHS, RHS))
             {
                 TypeError error = new TypeError(ctx, LHS, RHS);
-                error_vector.add(error);
+                errorVector.add(error);
                 System.err.println(error.getText());
             }
             curr_code.add("Pop regB");
