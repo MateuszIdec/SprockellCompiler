@@ -652,7 +652,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         }
         else
         {
-            // Name not found error;
+            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            error_vector.add(error);
+            System.err.println(error.getText());
         }
 //         attrs.name = ctx.getChild(1).getText();
 //
