@@ -1,12 +1,9 @@
 package antlr4.ut.pp.parser;
 
 import code_generation.*;
-import errors.CompilerError;
+import errors.*;
 import errors.OutOfMemoryError;
-import errors.RedefinitonError;
-import errors.NameNotFoundError;
 import org.antlr.v4.runtime.ParserRuleContext;
-import errors.TypeError;
 
 import java.util.Objects;
 import java.util.ArrayList;
@@ -17,8 +14,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
     ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     public MemoryManager memoryManager = new MemoryManager();
-    private int TID = 0;
-    private int threadCounter = 1;
+    private int TID;
+    private int threadCounter;
+    private SymbolTable currSymbolTable  = null;
+    private ArrayList<String> currCode  = null;
+
 
     /**
      * @return code for all threads
@@ -34,58 +34,56 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitModule(MyLangParser.ModuleContext ctx) {
 
-        SymbolTable st = new SymbolTable();
-        symbolTables.add(st);
-        Symbol tidSymbol = new Symbol();
-
-        memoryManager.createNewLocalMemoryManager();
-        code.add(new ArrayList<>());
-        int TID = this.TID;
 
         try {
-            ArrayList<String> currCode = code.get(TID);
-            String loadOneToReg = "Load (ImmValue 1) regA";
+            memoryManager.createNewLocalMemoryManager();
+            threadCounter = 1;
+            TID = 0;
+
+            symbolTables.add(new SymbolTable());
+            currSymbolTable = symbolTables.get(this.TID);
+
+            code.add(new ArrayList<>());
+            currCode = code.get(this.TID);
+
             int globalVarAddress = memoryManager.allocateGlobalVariable();
-            tidSymbol.address = globalVarAddress;
-            tidSymbol.type = Type.FORK;
-            tidSymbol.isShared = false;
-            st.add("TID", tidSymbol );
-            String updateGlobalVar = "WriteInstr regA (DirAddr "+ globalVarAddress + ")";
-            currCode.add(loadOneToReg);
-            currCode.add(updateGlobalVar);
+            addTIDSymbolToSymbolTable(globalVarAddress);
+
+            currCode.add("Load (ImmValue 1) regA");
+            currCode.add("WriteInstr regA (DirAddr "+ globalVarAddress + ")");
             super.visitModule(ctx);
-            String epilog = "WriteInstr " + "reg0 " +  "(DirAddr "+ globalVarAddress + ")";
-            currCode.add(epilog);
+            currCode.add("WriteInstr " + "reg0 " +  "(DirAddr "+ globalVarAddress + ")");
             currCode.add("EndProg");
+
         } catch (Exception e) {
             System.err.println("Parsing failed " + e);
         }
         return null;
     }
 
+    private void addTIDSymbolToSymbolTable(int globalVarAddress)
+    {
+        Symbol tidSymbol = new Symbol();
+        tidSymbol.address = globalVarAddress;
+        tidSymbol.type = Type.FORK;
+        tidSymbol.isShared = false;
+        currSymbolTable.add("TID", tidSymbol );
+    }
+
+
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
-        boolean is_parent_for_loop = false;
-        System.out.println("Entering scope");
-        if(!is_parent_for_loop)
-            symbolTable.openScope();
-
+        currSymbolTable.openScope();
         for (int i = 0 ; i< ctx.getChildCount();i++)
             visit(ctx.getChild(i));
-        if(!is_parent_for_loop)
-            symbolTable.closeScope();
-        System.out.println("Exiting scope ");
+        currSymbolTable.closeScope();
         return null;
     }
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
-        int TID = this.TID ;
-        SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
-        ArrayList<String> currCode = code.get(TID);
 
         if(ctx.getChild(0).getText().equals("shared")) {
             symbol.isShared = true;
@@ -95,7 +93,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         String name = ctx.getChild(1 + sharedVarCase).getText();
 
         // Check if variable is already defined in local scope
-        if(symbolTable.checkLocalScope(name)) {
+        if(currSymbolTable.checkLocalScope(name)) {
             attrs.type = Type.ERROR;
             attrs.name = name;
 
@@ -118,7 +116,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             }
             currCode.add("Pop regA");
             currCode.add("WriteInstr regA (DirAddr "+ address + ")");
-
         }
         else {
             address = memoryManager.createNewVariable(TID, 1);
@@ -135,55 +132,28 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         symbol.type = attrs.type;
         symbol.address = address;
 
-        symbolTable.add(attrs.name, symbol);
-        System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
+        currSymbolTable.add(attrs.name, symbol);
         return attrs;
     }
 
 
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
-        return visit(ctx.getChild(0));
-    }
-
-    @Override
-    public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
-        if(ctx.getChildCount()==2)
-            return visit(ctx.getChild(0));
-        else
-            return new Attrs();
-    }
-
-    private String printVariable(Attrs attrs) {
-        return attrs.name + " ";
-    }
-
-    @Override
-    public Attrs visitAssignment_expr(MyLangParser.Assignment_exprContext ctx) {
-        int TID = this.TID;
-
         Attrs attrs = new Attrs();
-        if(ctx.getChildCount() == 1) {
-//            System.out.println("Assignment: Single child, value: " + ctx.getText());
+        if(ctx.getChildCount() == 1)
             attrs = visit(ctx.getChild(0));
-        }
         else if(ctx.getChildCount() == 3) {
             Attrs value = visit(ctx.getChild(2));
             attrs.name =  ctx.getChild(0).getText();
 
             if(!symbolTables.get(TID).contains(attrs.name)) {
-
                 attrs.type = Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
                 System.err.println(error.getText());
                 errorVector.add(error);
                 return attrs;
             }
-
-            System.out.println("Assignment: " + printVariable(attrs));
-            // TODO change this so it uses tables to determine whether an *= or += can be performed
             if (!are_compatible(attrs ,value)) {
-                attrs.type = Type.INT;
                 TypeError error = new TypeError(ctx, attrs, value);
                 errorVector.add(error);
                 System.err.println(error.getText());
@@ -206,10 +176,10 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
     @Override
-    public Attrs visitAssignment_operator(MyLangParser.Assignment_operatorContext ctx) {
-        Attrs attrs = new Attrs();
-        attrs.name = ctx.getText();
-        return attrs;
+    public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
+        if(ctx.getChildCount()==2)
+            visit(ctx.getChild(0));
+        return null;
     }
 
     @Override
@@ -390,11 +360,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitGet_thread_id_expression(MyLangParser.Get_thread_id_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        int TID = this.TID;
-        SymbolTable st = symbolTables.get(TID);
         attrs.type = Type.FORK;
-        ArrayList<String> currCode = code.get(TID);
-        int address = st.getAddress("TID");
+        int address = currSymbolTable.getAddress("TID");
         currCode.add("ReadInstr (DirAddr "+ address +")");
         currCode.add("Push regA");
         return attrs;
@@ -403,17 +370,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
-        int TID = this.TID;
         attrs.name = ctx.getText();
-        SymbolTable st = symbolTables.get(TID);
-        // check whether var name in scope
-        // find its corresponding address
-        // load value from found address and put it into newly allocated register
-        if(st.contains(attrs.name)) {
-            ArrayList<String> currCode = code.get(TID);
-            int address = st.getAddress(attrs.name);
-            attrs.type = st.getType(attrs.name);
-            if(st.isShared(attrs.name)){
+        if(currSymbolTable.contains(attrs.name)) {
+            int address = currSymbolTable.getAddress(attrs.name);
+            attrs.type = currSymbolTable.getType(attrs.name);
+            if(currSymbolTable.isShared(attrs.name)){
                 currCode.add("ReadInstr (DirAddr "+ address +")");
                 currCode.add("Receive regA");
             }
@@ -433,9 +394,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) {
-        int TID = this.TID;
         Attrs attrs = new Attrs();
-
         String primitiveTypeValue = "0";
         if(ctx.INT() != null) {
             attrs.type = Type.INT;
@@ -445,10 +404,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             if (ctx.BOOL().getText().equals("True"))
                 primitiveTypeValue = "1";
         }
-        ArrayList<String> currentCode = code.get(TID);
         String putValueIntoRegInstruction = "Load (ImmValue " + primitiveTypeValue +") regA";
-        currentCode.add(putValueIntoRegInstruction);
-        currentCode.add("Push regA");
+        currCode.add(putValueIntoRegInstruction);
+        currCode.add("Push regA");
         return attrs;
     }
 
@@ -457,29 +415,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitCompound_statement(MyLangParser.Compound_statementContext ctx) {
         return visit(ctx.getChild(1));
     }
-
-    @Override
-    public Attrs visitDefinition_statement(MyLangParser.Definition_statementContext ctx) {
-        return visit(ctx.getChild(0));
-    }
-
-    @Override
-    public Attrs visitParameters(MyLangParser.ParametersContext ctx) {
-        for(int i = 0; i < ctx.getChildCount();i+=2)
-        {
-            visit(ctx.getChild(i));
-        }
-        return new Attrs();
-    }
-
-    @Override
-    public Attrs visitParameter(MyLangParser.ParameterContext ctx) {
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
-        // TODO how to determine type of variable before function call?
-        symbolTable.add(ctx.getText(), null);
-        return new Attrs();
-    }
-
 
     @Override
     public Attrs visitStatement(MyLangParser.StatementContext ctx) {
@@ -521,9 +456,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
-        // TODO check what attributes should be in if statement, maybe visit while, for and if just for code gen?
-        int TID = this.TID;
-        ArrayList<String> currCode = code.get(TID);
         int startOfWhile = currCode.size();
         Attrs expression = visit(ctx.getChild(1));
         int branchInstructionNr = currCode.size();
@@ -542,41 +474,21 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     }
 
     @Override
-    public Attrs visitFor_statement(MyLangParser.For_statementContext ctx) {
-        SymbolTable symbolTable = symbolTables.get(symbolTables.size() -1);
-        symbolTable.openScope();
-        for(int i = 0; i < ctx.getChildCount(); i++)
-        {
-            visit(ctx.getChild(i));
-        }
-        symbolTable.closeScope();
-        return new Attrs();
-    }
-
-    @Override
-    public Attrs visitReturn_statement(MyLangParser.Return_statementContext ctx) {
-        // TODO what  to return? Code generation for sure.
-        return super.visitReturn_statement(ctx);
-    }
-
-    @Override
     public Attrs visitFork_expression(MyLangParser.Fork_expressionContext ctx) {
         Attrs attrs = new Attrs();
-        int currTID = this.TID;
-        ArrayList<String> currCode = code.get(TID);
-        int newThreadIsRunningAddress = -1 ;
+        int scopeTID = this.TID; // copy
+        ArrayList<String> scopeCode = this.currCode;
+        SymbolTable scopeST = currSymbolTable;
+        int newThreadIsRunningAddress;
         try {
             newThreadIsRunningAddress = memoryManager.allocateGlobalVariable();
             memoryManager.createNewLocalMemoryManager();
-            SymbolTable newST = symbolTables.get(TID).deepCopy();
-            Symbol newTID = new Symbol();
-            newTID.isShared = false;
-            newTID.type = Type.FORK;
-            newTID.address = newThreadIsRunningAddress;
-            newST.updateTID(newTID);
+            SymbolTable newST = SymbolTable.provideSymbolTableForFork(currSymbolTable, newThreadIsRunningAddress);
             symbolTables.add(newST);
+            currSymbolTable = newST;
             ArrayList<String> newThreadCode = new ArrayList<>();
             code.add(newThreadCode);
+            currCode = newThreadCode;
             TID = threadCounter;
             threadCounter ++;
 
@@ -588,7 +500,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             newThreadCode.add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")");
             newThreadCode.add("EndProg");
 
-            this.TID = currTID;
+            this.TID = scopeTID;
+            this.currCode = scopeCode;
+            this.currSymbolTable = scopeST;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -610,10 +524,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             System.err.println(error.getText());
             errorVector.add(error);
         }
-        int TID = this.TID;
-        SymbolTable symbolTable = symbolTables.get(TID);
-        Attrs attrs = new Attrs();
-        ArrayList<String> currCode = code.get(TID);
         currCode.add("Pop regA");
         currCode.add("ReadInstr (IndAddr regA)");
         currCode.add("Receive regB");
@@ -624,14 +534,12 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitLock_statement(MyLangParser.Lock_statementContext ctx) {
-        int TID = this.TID;
-        SymbolTable symbolTable = symbolTables.get(TID);
         Attrs attrs = new Attrs();
         ArrayList<String> currCode = code.get(TID);
         attrs.name = ctx.IDENTIFIER().getText();
-        if(symbolTable.contains(attrs.name))
+        if(currSymbolTable.contains(attrs.name))
         {
-            Symbol s = symbolTable.getSymbol(attrs.name);
+            Symbol s = currSymbolTable.getSymbol(attrs.name);
             attrs.type = s.type;
             if (s.type == Type.BOOL && s.isShared == true)
             {
@@ -660,26 +568,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             errorVector.add(error);
             System.err.println(error.getText());
         }
-//         attrs.name = ctx.getChild(1).getText();
-//
-//        // If identifier not found in all scopes then add new error
-//        if(symbolTable.contains(attrs.name)) {
-//            attrs.type = symbolTable.getType(attrs.name);
-//        }
-//        else
-//        {
-//            attrs.type = Type.ERROR;
-//            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-//            error_vector.add(error);
-//            System.err.println(error.getText());
-//        }
-//
-//        if(attrs.type == Type.FORK)
-//        {
-//            TypeError error = new TypeError(ctx, attrs, Type.INT);
-//            System.err.println(error.getText());
-//            error_vector.add(error);
-//        }
         return attrs;
     }
 
@@ -693,15 +581,11 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     private boolean are_compatible(Attrs attr1, Attrs attrs2)
     {
         //TODO improve
-
-        return getType(attr1) == getType(attrs2);
+        return getType(attr1).equals(getType(attrs2));
     }
 
     private Attrs manyOperation(ParserRuleContext ctx)
     {
-        int TID = symbolTables.size() -1;
-        ArrayList<String> curr_code = code.get(TID);
-
         Attrs LHS = visit(ctx.getChild(0));
         if(LHS.type == Type.ERROR)
             return LHS;
@@ -709,37 +593,8 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         Attrs RHS;
         for(int i = 2; i < ctx.getChildCount(); i+=2)
         {
-            String operationCode = "";
-            String operation = ctx.getChild(i-1).getText();
-            switch (operation) {
-                case "+":
-                    operationCode = "Add ";
-                    break;
-                case "-":
-                    operationCode = "Sub ";
-                    break;
-                case "*":
-                    operationCode = "Mul ";
-                    break;
-                case "==":
-                    operationCode = "Equal ";
-                    break;
-                case "!=":
-                    operationCode = "NEq ";
-                    break;
-                case ">":
-                    operationCode = "Gt ";
-                    break;
-                case "<":
-                    operationCode = "Lt ";
-                    break;
-                case "||":
-                    operationCode = "Or ";
-                    break;
-                case "&&":
-                    operationCode = "And ";
-                    break;
-            }
+            String operationCode = getOperationCode(ctx.getChild(i-1).getText());
+
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
 
@@ -752,15 +607,39 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
                 errorVector.add(error);
                 System.err.println(error.getText());
             }
-            curr_code.add("Pop regB");
-            curr_code.add("Pop regA");
-            String instr = "Compute " + operationCode + "regA regB regA";
-            curr_code.add(instr);
-            curr_code.add("Push regA");
+            currCode.add("Pop regB");
+            currCode.add("Pop regA");
+            currCode.add("Compute " + operationCode + "regA regB regA");
+            currCode.add("Push regA");
 
             LHS = RHS;
         }
         return LHS;
+    }
+    private String getOperationCode(String operator)
+    {
+
+        switch (operator) {
+            case "+":
+                return  "Add ";
+            case "-":
+                return "Sub ";
+            case "*":
+                return "Mul ";
+            case "==":
+                return "Equal ";
+            case "!=":
+                return "NEq ";
+            case ">":
+                return "Gt ";
+            case "<":
+                return "Lt ";
+            case "||":
+                return "Or ";
+            case "&&":
+                return "And ";
+        }
+        return null;
     }
 
     private boolean is_array_like(Attrs attrs)
@@ -777,21 +656,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
 
     @Override
     public Attrs visitPrint_statement(MyLangParser.Print_statementContext ctx) {
-        int TID = this.TID;
-
         Attrs attrs = visit(ctx.getChild(1));
-        if(attrs.type == Type.ERROR)
-        {
-            attrs.type = Type.ERROR;
-            System.err.println("Print statement received expression with no regName specified");
-            return attrs;
-        }
-        // Check if the expression to be printed is in register or in memory
-        ArrayList<String> curr_code =  code.get(TID);
-        curr_code.add("Pop regA");
+        if(attrs.type.equals(Type.ERROR))
+            return null;
+        ArrayList<String> currCode =  code.get(TID);
+        currCode.add("Pop regA");
         String writeInstr = "WriteInstr regA numberIO";
-        curr_code.add(writeInstr);
-        return attrs;
+        currCode.add(writeInstr);
+        return null;
     }
 }
 // Dont forget to regenerate ANTLR grammar
