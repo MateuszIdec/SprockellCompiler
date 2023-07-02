@@ -1,7 +1,7 @@
 package errors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import ut.pp.Attrs;
+import code_generation.Attrs;
 
 public class NameNotFoundError extends CompilerError {
     public NameNotFoundError(ParserRuleContext ctx, Attrs attrs) {

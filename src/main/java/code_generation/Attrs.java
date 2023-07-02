@@ -1,6 +1,4 @@
-package ut.pp;
-
-import java.util.ArrayList;
+package code_generation;
 
 public class Attrs {
         public String name;

@@ -1,4 +1,4 @@
-package ut.pp;
+package code_generation;
 
 public class Symbol {
     public Type type = Type.ERROR;

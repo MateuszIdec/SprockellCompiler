@@ -1,8 +1,8 @@
 package errors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import ut.pp.Attrs;
-import ut.pp.Type;
+import code_generation.Attrs;
+import code_generation.Type;
 
 public class TypeError extends CompilerError{
     Type expected_type;
