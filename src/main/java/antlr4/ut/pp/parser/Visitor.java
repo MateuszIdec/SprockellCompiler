@@ -23,19 +23,9 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     /**
      * @return code for all threads
      */
-    public ArrayList<String> getCode() {
-        ArrayList<String> result = new ArrayList<>();
-        int i = 0;
-        for(ArrayList<String> threadCode : code) {
-            result.add("prog"+(i++)+" = " + threadCode.toString());
-        }
-        return result;
-    }
-    /**
-     * @return code for a given {@code threadId}
-     */
-    public String getCode(int threadId) {
-        return "prog = " + code.get(threadId).toString();
+
+    public ArrayList<ArrayList<String>> getCode() {
+        return code;
     }
 
     @Override
@@ -149,8 +139,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         symbolTable.add(attrs.name, symbol);
         System.out.println("New variable defined: \"" + attrs.name + "\" " + attrs.type);
         return attrs;
-
-
     }
 
 

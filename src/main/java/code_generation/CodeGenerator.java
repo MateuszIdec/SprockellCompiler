@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -24,13 +25,19 @@ public class CodeGenerator {
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
         visitor.visit(tree);
-        ArrayList<String> code = visitor.getCode();
+        ArrayList<ArrayList<String>> code = visitor.getCode();
         StringBuilder result = new StringBuilder();
-
+        ArrayList<String> threadCode = new ArrayList();
+        int i = 0;
         int threadCount = 0;
+
+        for(ArrayList<String> x : code) {
+            threadCode.add("prog"+(i++)+" = " + x.toString());
+        }
+
         result.append("module Main where \n\nimport Sprockell \n\n");
-        for(String threadCode : code) {
-            result.append(prettyCode(threadCode) + "\n\n");
+        for(String x : threadCode) {
+            result.append(prettyCode(x) + "\n\n");
             threadCount++;
         }
         result.append("\n\nmain = run [");
@@ -42,8 +49,8 @@ public class CodeGenerator {
                 result.append("]");
         }
         if(consolePrint){
-            for(String threadCode : code) {
-                System.out.println(prettyCodeWithLineNumbers(threadCode));
+            for(String x : threadCode) {
+                System.out.println(prettyCodeWithLineNumbers(x));
             }
         }
         return result.toString();
