@@ -16,29 +16,40 @@ import java.nio.file.Path;
 
 public class CodeGenerator {
 
-    public static String generateCode(String text, boolean consolePrint)
-    {
+    public static String generateCode(String text, boolean consolePrint) throws Exception {
         Visitor visitor = new Visitor();
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         MyLangParser parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
+
+        // Check if there are any syntax errors
+        if(parser.getNumberOfSyntaxErrors() > 0) {
+            throw new Exception("Syntax error");
+        }
+
         visitor.visit(tree);
+
+        // Check if there are any parsing errors
+        if(visitor.error_vector.size() > 0) {
+            throw new Exception("Parsing error");
+        }
         ArrayList<ArrayList<String>> code = visitor.getCode();
         StringBuilder result = new StringBuilder();
-        ArrayList<String> threadCode = new ArrayList();
+        ArrayList<String> finalCode = new ArrayList<>();
         int i = 0;
         int threadCount = 0;
 
-        for(ArrayList<String> x : code) {
-            threadCode.add("prog"+(i++)+" = " + x.toString());
+        for(ArrayList<String> threadCode : code) {
+            finalCode.add("prog"+(i++)+" = " + threadCode.toString());
         }
 
         result.append("module Main where \n\nimport Sprockell \n\n");
-        for(String x : threadCode) {
+        for(String x : finalCode) {
             result.append(prettyCode(x)).append("\n\n");
             threadCount++;
         }
+
         result.append("\n\nmain = run [");
         for (int id = 0; id < threadCount; id++){
             result.append("prog").append(id);
@@ -47,25 +58,47 @@ public class CodeGenerator {
             else
                 result.append("]");
         }
+
         if(consolePrint){
-            for(String x : threadCode) {
+            for(String x : finalCode) {
                 System.out.println(prettyCodeWithLineNumbers(x));
             }
         }
+
         return result.toString();
     }
 
-    public static boolean compileFile(String input, String output, boolean consolePrint) throws IOException {
+    public static boolean compileFile(String input, String output, boolean consolePrint) {
         Path inputPath = FileSystems.getDefault().getPath("", input);
         Path outputPath = FileSystems.getDefault().getPath("", output);
+        String code;
+        String machineCode;
 
-        String result = new String(Files.readAllBytes(inputPath));
+        try {
+            code = new String(Files.readAllBytes(inputPath));
+        }
+        catch(IOException e) {
+            System.err.println("Path + " + inputPath + "does not exist");
+            return false;
+        }
+
+        // Don't generate output file if there are any errors in the code generation stage
+        try {
+            machineCode = generateCode(code, consolePrint);
+        } catch (Exception e) {
+            return false;
+        }
 
         File outputFile = new File(outputPath.toString());
-        String code = generateCode(result, consolePrint);
-        FileWriter fileWriter = new FileWriter(outputFile);
-        fileWriter.write(code);
-        fileWriter.close();
+
+        try {
+            FileWriter fileWriter = new FileWriter(outputFile);
+            fileWriter.write(machineCode);
+            fileWriter.close();
+        } catch(IOException e) {
+            System.err.println("Writing to file " + outputPath + " failed");
+            return false;
+        }
 
         return true;
     }
@@ -81,12 +114,14 @@ public class CodeGenerator {
                 result.append(code.charAt(x));
             }
         }
+
         return result.toString();
     }
 
     public static String prettyCodeWithLineNumbers(String code) {
         StringBuilder result = new StringBuilder();
         int lineNumber = 1;
+
         for(int x = 0; x < code.length(); x++) {
             if(code.charAt(x) == ',') {
                 result.append("\n").append(lineNumber).append("     ,");
@@ -96,6 +131,7 @@ public class CodeGenerator {
                 result.append(code.charAt(x));
             }
         }
+
         return result.toString();
     }
 }

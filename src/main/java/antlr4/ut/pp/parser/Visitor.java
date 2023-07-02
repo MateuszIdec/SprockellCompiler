@@ -3,7 +3,7 @@ package antlr4.ut.pp.parser;
 import errors.CompilerError;
 import code_generation.MemoryManager;
 import errors.OutOfMemoryError;
-import errors.RedefinitionError;
+import errors.RedefinitonError;
 import errors.NameNotFoundError;
 import org.antlr.v4.runtime.ParserRuleContext;
 import errors.TypeError;
@@ -95,7 +95,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs.type = Type.ERROR;
             attrs.name = name;
 
-            RedefinitionError error = new RedefinitionError(ctx, attrs);
+            RedefinitonError error = new RedefinitonError(ctx, attrs);
             error_vector.add(error);
             System.err.println(error.getText());
             return attrs;
@@ -237,7 +237,6 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     @Override
     public Attrs visitRelational_expr(MyLangParser.Relational_exprContext ctx) {
         Attrs attrs;
-        int TID = this.TID;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }

@@ -7,6 +7,8 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        CodeGenerator.compileFile("test.txt", "output.hs", true);
+        if (CodeGenerator.compileFile("test.txt", "output.hs", false))
+            System.out.println("Compilation successful");
+
     }
 }
