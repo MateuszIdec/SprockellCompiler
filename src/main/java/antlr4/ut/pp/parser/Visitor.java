@@ -312,14 +312,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             {
                 // array-like type, child[0] has to be array-like, so String or array, child[2] has to be int-like
                 Attrs array_like = visit(ctx.getChild(0));
-                if(!is_array_like(array_like))
+                if(!isArrayLike(array_like))
                 {
                     TypeError error = new TypeError(ctx, array_like, Type.ARRAY); // TODO not only array but all arraylike
                     errorVector.add(error);
                     System.err.println(error.getText());
                 }
                 Attrs int_like = visit(ctx.getChild(2));
-                if (!is_int_like(int_like))
+                if (!isIntLike(int_like))
                 {
                     // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
                     TypeError error = new TypeError(ctx, int_like, Type.INT); // TODO not only array but all arraylike
@@ -396,6 +396,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
     public Attrs visitPrimitive_type(MyLangParser.Primitive_typeContext ctx) {
         Attrs attrs = new Attrs();
         String primitiveTypeValue = "0";
+
         if(ctx.INT() != null) {
             attrs.type = Type.INT;
             primitiveTypeValue = ctx.INT().getText();
@@ -642,13 +643,14 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
         return null;
     }
 
-    private boolean is_array_like(Attrs attrs)
+
+    private boolean isArrayLike(Attrs attrs)
     {
         // TODO impove;
         return attrs.type == Type.ARRAY  || attrs.type == Type.STRING;
     }
 
-    private boolean is_int_like(Attrs attrs)
+    private boolean isIntLike(Attrs attrs)
     {
         // TODO impove;
         return attrs.type == Type.INT  || attrs.type == Type.BOOL;
