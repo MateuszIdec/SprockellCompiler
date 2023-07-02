@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -37,12 +36,12 @@ public class CodeGenerator {
 
         result.append("module Main where \n\nimport Sprockell \n\n");
         for(String x : threadCode) {
-            result.append(prettyCode(x) + "\n\n");
+            result.append(prettyCode(x)).append("\n\n");
             threadCount++;
         }
         result.append("\n\nmain = run [");
         for (int id = 0; id < threadCount; id++){
-            result.append("prog" + id);
+            result.append("prog").append(id);
             if(id != threadCount - 1)
                 result.append(",");
             else

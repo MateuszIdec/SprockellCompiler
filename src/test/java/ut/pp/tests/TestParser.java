@@ -30,6 +30,7 @@ public class TestParser {
      */
     public int parseString(String text) {
         visitor.error_vector.clear();
+        visitor.symbolTables.clear();
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
@@ -75,9 +76,12 @@ public class TestParser {
     public void testInLocalScope()
     {
         String input = "{var x = 0;} x = 1;";
-        parseString(input);
 
+        parseString(input);
         assertTrue(visitor.error_vector.get(0) instanceof NameNotFoundError);
+
+        String input1 = "var x = 5; { var x = 3; }";
+        assertEquals(0, parseString(input1));
     }
 
     @Test

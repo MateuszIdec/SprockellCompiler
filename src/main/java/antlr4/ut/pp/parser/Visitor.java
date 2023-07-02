@@ -3,7 +3,7 @@ package antlr4.ut.pp.parser;
 import errors.CompilerError;
 import code_generation.MemoryManager;
 import errors.OutOfMemoryError;
-import errors.RedefinitonError;
+import errors.RedefinitionError;
 import errors.NameNotFoundError;
 import org.antlr.v4.runtime.ParserRuleContext;
 import errors.TypeError;
@@ -95,7 +95,7 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             attrs.type = Type.ERROR;
             attrs.name = name;
 
-            RedefinitonError error = new RedefinitonError(ctx, attrs);
+            RedefinitionError error = new RedefinitionError(ctx, attrs);
             error_vector.add(error);
             System.err.println(error.getText());
             return attrs;
@@ -259,17 +259,19 @@ public class Visitor extends MyLangBaseVisitor <Attrs> {
             Attrs expression = visit(ctx.getChild(1));
             currCode.add("Pop regA");
             currCode.add("Compute Equal regA reg0 regA");
+
             int currentInstructionNr = currCode.size();
             String branchInstruction = "Branch regA ";
             currCode.add(branchInstruction);
             Attrs compoundStatement = visit(ctx.getChild(2));
+
             int instructionNrAfterIfBody = currCode.size();
             int label = instructionNrAfterIfBody - currentInstructionNr;
             branchInstruction += "( Rel " + label + " )";
             currCode.set(currentInstructionNr, branchInstruction);
             attrs.type = Type.BOOL; // TODO why? If not usable then include in for loop
         }
-        // Visit all else/ elif stateents
+        // Visit all else/ elif statements
         else {
             // TODO close scope
             for(int x = 3; x < ctx.getChildCount(); x++)
