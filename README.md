@@ -2,13 +2,12 @@
 
 This software allows to compile custom programming language into machine code for the virtual CPU called Sprockell.
 
-
 ## Prerequisites
 
 Make sure you have installed:
 
-- Maven. Version 3.8 or later.
-- A Java 11 or later.
+- Maven 3.8 or later.
+- Java 11 or later.
 
 
 ## Compiling
@@ -18,7 +17,6 @@ In a terminal, run:
 ```
 mvn compile
 ```
-
 
 ## Running
 
