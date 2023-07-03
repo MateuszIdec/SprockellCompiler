@@ -44,7 +44,7 @@ public class CodeGenerator {
         visitor.visit(tree);
 
         // Check if there are any parsing errors
-        if(visitor.errorVector.size() > 0) {
+        if(visitor.getErrorVector().size() > 0) {
             // Print all the errors
             for(CompilerError error : visitor.getErrorVector()) {
                 System.err.println(error.getText());

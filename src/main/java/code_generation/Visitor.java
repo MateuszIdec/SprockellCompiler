@@ -2,7 +2,6 @@ package code_generation;
 
 import antlr4.ut.pp.parser.MyLangBaseVisitor;
 import antlr4.ut.pp.parser.MyLangParser;
-import code_generation.*;
 import errors.*;
 import errors.OutOfMemoryError;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -12,10 +11,10 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor<Attrs> {
-    public Vector<CompilerError> errorVector = new Vector<>();
-    public ArrayList<SymbolTable> symbolTables = new ArrayList<>();
-    ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
-    public MemoryManager memoryManager = new MemoryManager();
+    private final Vector<CompilerError> errorVector = new Vector<>();
+    private final ArrayList<SymbolTable> symbolTables = new ArrayList<>();
+    private final ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
+    private final MemoryManager memoryManager = new MemoryManager();
     private int TID;
     private int threadCounter;
     private SymbolTable currSymbolTable  = null;
@@ -30,7 +29,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     }
 
     public Vector<CompilerError> getErrorVector() {
-        return errorVector;
+        return new Vector<>(errorVector);
+    }
+    public void clearErrorVector() {
+        errorVector.clear();
+    }
+    public void clearSymbolTables() {
+        symbolTables.clear();
     }
 
     @Override
@@ -72,7 +77,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         currSymbolTable.add("TID", tidSymbol );
     }
 
-
     @Override
     public Attrs visitBody(MyLangParser.BodyContext ctx) {
         currSymbolTable.openScope();
@@ -81,6 +85,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         currSymbolTable.closeScope();
         return null;
     }
+
     @Override
     public Attrs visitVar_def(MyLangParser.Var_defContext ctx) {
         Attrs attrs = new Attrs();
@@ -138,7 +143,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return attrs;
     }
 
-
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
         Attrs attrs = new Attrs();
@@ -155,7 +159,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 errorVector.add(error);
                 return attrs;
             }
-            if (!are_compatible(attrs ,value)) {
+            if (!areCompatible(attrs ,value)) {
                 TypeError error = new TypeError(ctx, attrs, value);
                 errorVector.add(error);
                 System.err.println(error.getText());
@@ -294,7 +298,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitMulti_expr(MyLangParser.Multi_exprContext ctx) {
-        Attrs attrs = new Attrs();
+        Attrs attrs;
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
@@ -416,7 +420,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         currCode.add("Push regA");
         return attrs;
     }
-
 
     @Override
     public Attrs visitCompound_statement(MyLangParser.Compound_statementContext ctx) {
@@ -548,7 +551,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         {
             Symbol s = currSymbolTable.getSymbol(attrs.name);
             attrs.type = s.type;
-            if (s.type == Type.BOOL && s.isShared == true)
+            if (s.type == Type.BOOL && s.isShared)
             {
                 if(ctx.LOCK() != null)
                 {
@@ -585,7 +588,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return attrs.type;
     }
 
-    private boolean are_compatible(Attrs attr1, Attrs attrs2)
+    private boolean areCompatible(Attrs attr1, Attrs attrs2)
     {
         //TODO improve
         return getType(attr1).equals(getType(attrs2));
@@ -608,7 +611,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             if(RHS.type == Type.ERROR)
                 return RHS;
 
-            if(!are_compatible(LHS, RHS))
+            if(!areCompatible(LHS, RHS))
             {
                 TypeError error = new TypeError(ctx, LHS, RHS);
                 errorVector.add(error);
@@ -649,7 +652,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return null;
     }
 
-
     private boolean isArrayLike(Attrs attrs)
     {
         // TODO impove;
@@ -674,4 +676,3 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return null;
     }
 }
-// Dont forget to regenerate ANTLR grammar
