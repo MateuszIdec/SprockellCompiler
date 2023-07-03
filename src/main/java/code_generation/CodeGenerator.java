@@ -89,7 +89,7 @@ public class CodeGenerator {
             code = new String(Files.readAllBytes(inputPath));
         }
         catch(IOException e) {
-            System.err.println("Path + " + inputPath + "does not exist");
+            System.err.println("Input file path \"" + inputPath + "\" does not exist");
             return false;
         }
 
@@ -107,7 +107,7 @@ public class CodeGenerator {
             fileWriter.write(machineCode);
             fileWriter.close();
         } catch(IOException e) {
-            System.err.println("Writing to file " + outputPath + " failed");
+            System.err.println("Writing to file \"" + outputPath + "\" failed");
             return false;
         }
 
