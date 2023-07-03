@@ -16,7 +16,13 @@ import java.util.ArrayList;
 import java.nio.file.Path;
 
 public class CodeGenerator {
+    private static ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
+    private static int threadID = 0;
+    private int threadCounter = 1;
 
+    public void incrementThreadID() {
+        threadID++;
+    }
     /**
      * Generate machine code for a given code
      * @param text string containing the code
@@ -42,6 +48,8 @@ public class CodeGenerator {
             throw new Exception("Syntax error");
 
         visitor.visit(tree);
+        // TODO remove when code generation will happen in CodeGenerator
+        code = visitor.getCode();
 
         // Check if there are any parsing errors
         if(visitor.getErrorVector().size() > 0) {
@@ -52,39 +60,30 @@ public class CodeGenerator {
             throw new Exception("Parsing error");
         }
 
-        ArrayList<ArrayList<String>> code = visitor.getCode();
         StringBuilder result = new StringBuilder();
-        ArrayList<String> finalCode = new ArrayList<>();
-        int i = 0;
         int threadCount = 0;
 
-        for(ArrayList<String> threadCode : code) {
-            finalCode.add("prog"+(i++)+" = " + threadCode.toString());
-        }
 
         result.append("module Main where \n\nimport Sprockell \n\n");
-        for(String x : finalCode) {
-            result.append(prettyCode(x)).append("\n\n");
-            threadCount++;
+        for(ArrayList<String> threadCode : code) {
+            result.append("prog").append(threadCount++).append(" = ");
+            result.append(prettyCode(threadCode.toString())).append("\n\n");
         }
 
         result.append("\n\nmain = run [");
-        for (int id = 0; id < threadCount; id++){
+        for(int id = 0; id < threadCount - 1; id++) {
             result.append("prog").append(id);
-            if(id != threadCount - 1)
                 result.append(",");
-            else
-                result.append("]");
         }
+        result.append("prog").append(threadCount - 1).append("]");
 
         if(consolePrint){
-            for(String x : finalCode) {
-                System.out.println(prettyCodeWithLineNumbers(x));
+                System.out.println(prettyCodeWithLineNumbers(result.toString()));
             }
-        }
 
         return result.toString();
-    }
+        }
+
 
     /**
      * Compile the code and save it
@@ -96,11 +95,11 @@ public class CodeGenerator {
     public static boolean compileFile(String inputFile, String outputFile, boolean consolePrint) {
         Path inputPath = FileSystems.getDefault().getPath("", inputFile);
         Path outputPath = FileSystems.getDefault().getPath("", outputFile);
-        String code;
+        String inputFileCode;
         String machineCode;
 
         try {
-            code = new String(Files.readAllBytes(inputPath));
+            inputFileCode = new String(Files.readAllBytes(inputPath));
         }
         catch(IOException e) {
             System.err.println("Input file path \"" + inputPath + "\" does not exist");
@@ -109,7 +108,7 @@ public class CodeGenerator {
 
         // Don't generate output file if there are any errors in the code generation stage
         try {
-            machineCode = generateCode(code, consolePrint);
+            machineCode = generateCode(inputFileCode, consolePrint);
         } catch (Exception e) {
             return false;
         }
@@ -128,7 +127,7 @@ public class CodeGenerator {
         return true;
     }
 
-    public static String prettyCode(String code) {
+    private static String prettyCode(String code) {
         StringBuilder result = new StringBuilder();
 
         for(int x = 0; x < code.length(); x++) {
@@ -143,7 +142,7 @@ public class CodeGenerator {
         return result.toString();
     }
 
-    public static String prettyCodeWithLineNumbers(String code) {
+    private static String prettyCodeWithLineNumbers(String code) {
         StringBuilder result = new StringBuilder();
         int lineNumber = 1;
 
@@ -156,7 +155,135 @@ public class CodeGenerator {
                 result.append(code.charAt(x));
             }
         }
-
         return result.toString();
+    }
+    public static class MachineCode {
+
+        public static void popRegA() {
+            code.get(threadID).add("Pop regA");
+        }
+
+        public static void popRegB() {
+            code.get(threadID).add("Pop regB");
+        }
+
+        public static void pushRegA() {
+            code.get(threadID).add("Push regA");
+        }
+
+        public static void progStart(int globalVarAddress) {
+            if (code.get(threadID) == null) {
+                code.add(new ArrayList<>());
+            }
+
+            code.get(threadID).add("Load (ImmValue 1) regA");
+            code.get(threadID).add("WriteInstr regA (DirAddr " + globalVarAddress + ")");
+        }
+
+        public static void progEnd(int globalVarAddress) {
+            code.get(threadID).add("WriteInstr " + "reg0 " + "(DirAddr " + globalVarAddress + ")");
+            code.get(threadID).add("EndProg");
+        }
+
+        public static void writeInstrFromRegA(int address) {
+            popRegA();
+            code.get(threadID).add("WriteInstr regA (DirAddr " + address + ")");
+        }
+
+        public static void storeFromRegA(int address) {
+            popRegA();
+            code.get(threadID).add("Store regA (DirAddr " + address + ")");
+        }
+
+        public static void computeEqual() {
+            code.get(threadID).add("Compute Equal regA reg0 regA");
+        }
+
+        public static void computeOperationCode(String operationCode) {
+            code.get(threadID).add("Compute " + operationCode + "regA regB regA");
+        }
+
+        public static void branchWithRel(String label) {
+            code.get(threadID).add("Branch RegA (Rel " + label + " )");
+        }
+
+        public static void branchPartial() {
+            code.get(threadID).add("Branch RegA ");
+        }
+
+        public static void branchFinishPartial(int partialBranchNumber, String instructionNumberAfterBody) {
+            code.get(threadID).set(partialBranchNumber, "( Abs " + instructionNumberAfterBody + " )");
+        }
+
+        public static void jump(int startOfWhile) {
+            code.get(threadID).add("Jump (Abs " + startOfWhile + ")");
+        }
+
+        public static void readIO() {
+            code.get(threadID).add("ReadInstr numberIO");
+            code.get(threadID).add("Receive regA");
+            code.get(threadID).add("Push regA");
+        }
+
+        public static void writeIO() {
+            code.get(threadID).add("WriteInstr regA numberIO");
+        }
+
+        public static void getThreadID(int address) {
+            code.get(threadID).add("Load (ImmValue "+address+") regA");
+            code.get(threadID).add("Push regA");
+        }
+
+        public static void readInstr(int address) {
+            code.get(threadID).add("ReadInstr (DirAddr "+ address +")");
+            code.get(threadID).add("Receive RegA");
+        }
+
+        public static void load(int address) {
+            code.get(threadID).add("Load (DirAddr " + address + ") regA");
+            pushRegA();
+        }
+
+        public static void loadImmediate(String primitiveTypeValue) {
+            code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") regA");
+            pushRegA();
+        }
+
+        public static void forkInitialization(int newThreadAddress) {
+            code.get(threadID).add("ReadInstr (DirAddr "+ newThreadAddress + ")");
+            code.get(threadID).add("Receive regA");
+            code.get(threadID).add("Compute Equal regA reg0 regA");
+            code.get(threadID).add("Branch regA (Rel (-3))");
+        }
+
+        public static void forkFinish(int newThreadAddress) {
+            code.get(threadID).add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadAddress + ")");
+            code.get(threadID).add("EndProg");
+        }
+
+        public static void forkEnd(int newThreadAddress) {
+            code.get(threadID).add("Load (ImmValue "+ newThreadAddress +") regA");
+            code.get(threadID).add("Push regA");
+            code.get(threadID).add("Load (ImmValue 1) regA");
+            code.get(threadID).add("WriteInstr " + "regA " +  "(DirAddr "+ newThreadAddress + ")");
+        }
+
+        public static void join() {
+            code.get(threadID).add("Pop regA");
+            code.get(threadID).add("ReadInstr (IndAddr regA)");
+            code.get(threadID).add("Receive regB");
+            code.get(threadID).add("Branch regB (Rel (-2))");
+        }
+
+        public static void testLockLoop(int address ) {
+            code.get(threadID).add("TestAndSet (DirAddr "+ address +")");
+            code.get(threadID).add("Receive regA");
+            code.get(threadID).add("Compute Equal regA reg0 regA");
+            code.get(threadID).add("Branch regA (Rel (-3))");
+        }
+
+        public static void placeLock(int address) {
+            code.get(threadID).add("WriteInstr reg0 (DirAddr "+ address +")");
+        }
     }
 }
