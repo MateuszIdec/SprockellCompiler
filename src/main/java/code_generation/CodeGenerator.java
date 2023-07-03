@@ -17,6 +17,13 @@ import java.nio.file.Path;
 
 public class CodeGenerator {
 
+    /**
+     * Generate machine code for a given code
+     * @param text string containing the code
+     * @param consolePrint debug print of the generated code
+     * @return compiled code
+     * @throws Exception syntax error or contextual error
+     */
     public static String generateCode(String text, boolean consolePrint) throws Exception {
         Visitor visitor = new Visitor();
         LexerErrorListener lexerErrorListener = new LexerErrorListener();
@@ -28,11 +35,11 @@ public class CodeGenerator {
 
         // Check if there are any token recognition errors
         if(lexerErrorListener.getSyntaxErrorsCount() > 0)
-            throw new Exception("Syntax error in lexer");
+            throw new Exception("Syntax error");
 
         // Check if there are any syntax errors
         if(parser.getNumberOfSyntaxErrors() > 0)
-            throw new Exception("Syntax error in parser");
+            throw new Exception("Syntax error");
 
         visitor.visit(tree);
 
@@ -79,9 +86,16 @@ public class CodeGenerator {
         return result.toString();
     }
 
-    public static boolean compileFile(String input, String output, boolean consolePrint) {
-        Path inputPath = FileSystems.getDefault().getPath("", input);
-        Path outputPath = FileSystems.getDefault().getPath("", output);
+    /**
+     * Compile the code and save it
+     * @param inputFile filepath to the file containing the code to compile
+     * @param outputFile filepath where the result will be saved
+     * @param consolePrint debug print of the generated code
+     * @return {@code true} if the compilation is successful
+     */
+    public static boolean compileFile(String inputFile, String outputFile, boolean consolePrint) {
+        Path inputPath = FileSystems.getDefault().getPath("", inputFile);
+        Path outputPath = FileSystems.getDefault().getPath("", outputFile);
         String code;
         String machineCode;
 
@@ -100,10 +114,10 @@ public class CodeGenerator {
             return false;
         }
 
-        File outputFile = new File(outputPath.toString());
+        File output = new File(outputPath.toString());
 
         try {
-            FileWriter fileWriter = new FileWriter(outputFile);
+            FileWriter fileWriter = new FileWriter(output);
             fileWriter.write(machineCode);
             fileWriter.close();
         } catch(IOException e) {
