@@ -22,29 +22,14 @@ mvn compile
 
 ## Running
 
-In a terminal, run:
-
-```
-mvn exec:java -Dexec.mainClass="Main"
-```
-
-This runs the `main` method of the class `Main`.
-
-Note: `exec` does not invoke `compile`, so if changes were made to the code, `compile` needs to be invoked before `exec`. These commands can also be combined:
-
-```
-mvn compile exec:java -Dexec.mainClass="Main"
-```
-
-`mvn exec:java` is part of the maven-exec plugin. For more information about e.g. passing arguments to the main class, we refer you to the plugin documentation.
-
-## Tests
+Specify the name of the file to compile in `input.txt` and the result file in `output.hs`  
 
 In a terminal, run:
-
 ```
-mvn test
+mvn exec:java "-Dexec.args = input.txt output.hs"
 ```
 
-This will run all test classes in the `src/test/java` directory which have names starting with "Test".
-
+Alternatively, to run it with the default filenames as specified above, run:
+```
+mvn exec:java
+```
