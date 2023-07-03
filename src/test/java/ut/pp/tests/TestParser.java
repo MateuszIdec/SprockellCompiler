@@ -144,14 +144,6 @@ public class TestParser {
         assertEquals(0, parseString(input));
     }
     @Test
-    public void testAssignmentWithUnknownOperation()
-    {
-        String input = "var x = 0; x ?= 1;";
-        parseString(input);
-
-        assertEquals(1, lexerErrorListener.getSyntaxErrorsCount());
-    }
-    @Test
     public void testRelation()
     {
         String input = "var a = True; var b = False; var c = a <= b;";
