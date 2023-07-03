@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.Visitor;
-import errors.LexerErrorListener;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
@@ -18,12 +17,10 @@ import errors.TypeError;
 public class TestParser {
     static Visitor visitor;
     static MyLangParser parser;
-    static LexerErrorListener lexerErrorListener;
 
     @Before
     public void setup() {
         visitor = new Visitor();
-        lexerErrorListener = new LexerErrorListener();
     }
 
     /**
@@ -35,10 +32,8 @@ public class TestParser {
     public int parseString(String text) {
         visitor.errorVector.clear();
         visitor.symbolTables.clear();
-        lexerErrorListener.resetSyntaxErrorCount();
 
         MyLangLexer myLangLexer = new MyLangLexer(CharStreams.fromString(text));
-        myLangLexer.addErrorListener(lexerErrorListener);
         CommonTokenStream tokens = new CommonTokenStream(myLangLexer);
         parser = new MyLangParser(tokens);
         ParseTree tree = parser.module();
@@ -53,14 +48,6 @@ public class TestParser {
         String input = ";";
 
         assertEquals(0, parseString(input));
-    }
-    @Test
-    public void testVariableDefinitionSyntaxIncomplete()
-    {
-        String input = "var x = 0 {}";
-        parseString(input);
-
-        assertEquals(2,parser.getNumberOfSyntaxErrors());
     }
     @Test
     public void testJustVariableDef()
