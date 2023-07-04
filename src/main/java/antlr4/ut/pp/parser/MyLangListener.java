@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -287,16 +287,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitVar_def(MyLangParser.Var_defContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitReturn_statement(MyLangParser.Return_statementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#print_statement}.
 	 * @param ctx the parse tree
