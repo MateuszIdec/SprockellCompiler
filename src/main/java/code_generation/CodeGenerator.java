@@ -53,8 +53,6 @@ public class CodeGenerator {
             throw new Exception("Syntax error");
 
         visitor.visit(tree);
-        // TODO remove when code generation will happen in CodeGenerator
-//        code = visitor.getCode();
 
         // Check if there are any parsing errors
         if(visitor.getErrorVector().size() > 0) {
@@ -81,7 +79,7 @@ public class CodeGenerator {
         }
         result.append("prog").append(threadCount - 1).append("]");
 
-        if(consolePrint){
+        if(consolePrint) {
                 System.out.println(prettyCodeWithLineNumbers(result.toString()));
             }
 
@@ -247,7 +245,7 @@ public class CodeGenerator {
         }
 
         /**
-         * Actions created from machine code instructions
+         * Actions created from machine code instructions.
          */
         public static class Action {
             static int currentInstructionNumber;
@@ -257,12 +255,12 @@ public class CodeGenerator {
                     code.add(new ArrayList<>());
                 }
 
-                code.get(threadID).add("Load (ImmValue 1) regA");
-                code.get(threadID).add("WriteInstr regA (DirAddr " + globalVarAddress + ")");
+                loadImmediate("1");
+                writeInstrFromRegA(globalVarAddress);
             }
 
             public static void progEnd(int globalVarAddress) {
-                code.get(threadID).add("WriteInstr " + "reg0 " + "(DirAddr " + globalVarAddress + ")");
+                writeInstrFromRegA(globalVarAddress);
                 code.get(threadID).add("EndProg");
             }
 
@@ -298,8 +296,8 @@ public class CodeGenerator {
 
             public static void readIO() {
                 code.get(threadID).add("ReadInstr numberIO");
-                code.get(threadID).add("Receive regA");
-                code.get(threadID).add("Push regA");
+                receiveRegister("regA");
+                pushRegister("regA");
             }
 
             public static void writeIO() {
