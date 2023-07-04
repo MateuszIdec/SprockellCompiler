@@ -6,7 +6,6 @@ import errors.*;
 import errors.OutOfMemoryError;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -93,21 +92,22 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             System.err.println(error.getText());
             return attrs;
         }
+
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
         int address;
+
         if(sharedVarCase == 1)
         {
             try {
                 address = memoryManager.allocateGlobalVariable();
-            }catch (Exception e)
+            } catch (Exception e)
             {
                 errorVector.add(new OutOfMemoryError(ctx, new Attrs()));
                 attrs.type = Type.ERROR;
                 return attrs;
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
-        }
-        else {
+        } else {
             address = memoryManager.createNewVariable(TID, 1);
 
             CodeGenerator.MachineCode.popRegister("regA");
@@ -140,6 +140,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 System.err.println(error.getText());
                 errorVector.add(error);
                 return attrs;
+            } else {
+                attrs.type =  currSymbolTable.getType(attrs.name);
             }
             if (!areCompatible(attrs ,value)) {
                 TypeError error = new TypeError(ctx, attrs, value);
@@ -287,24 +289,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
         else if (child_count == 4)
         {
-            if (Objects.equals(ctx.getChild(1).getText(), "["))
-            {
-                // array-like type, child[0] has to be array-like, so String or array, child[2] has to be int-like
-                Attrs array_like = visit(ctx.getChild(0));
-                if(!isArrayLike(array_like))
-                {
-                    TypeError error = new TypeError(ctx, array_like, Type.ARRAY); // TODO not only array but all arraylike
-                    errorVector.add(error);
-                    System.err.println(error.getText());
-                }
-                Attrs int_like = visit(ctx.getChild(2));
-                if (!isIntLike(int_like))
-                {
-                    // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
-                    TypeError error = new TypeError(ctx, int_like, Type.INT); // TODO not only array but all arraylike
-                    errorVector.add(error);
-                    System.err.println(error.getText());
-                }
+            String varName = ctx.getChild(0).getText();
+
+            if(symbolTables.get(TID).contains(varName)) {
+                attrs = visit(ctx.getChild(2));
+
+            } else {
+              attrs.type = Type.ERROR;
             }
         }
         return attrs;
@@ -381,6 +372,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = Type.BOOL;
             if (ctx.BOOL().getText().equals("True"))
                 primitiveTypeValue = "1";
+            else
+                primitiveTypeValue = "0";
         }
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue);
@@ -406,25 +399,26 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
-        return visit(ctx.getChild(1));
-    }
-
-    @Override
-    public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
         // TODO move the responsibility of checking if the same type to visit array
         Attrs attrs = new Attrs();
-        Attrs childAttrs = visit(ctx.getChild(0));
+        Attrs childAttrs = visit(ctx.getChild(1));
         Type type = childAttrs.type;
 
-        for(int x = 1; x < ctx.getChildCount(); x++) {
+        for(int x = 3; x < ctx.getChildCount() - 1; x+=2) {
             if(ctx.getChild(x).getText().equals(","))
                 x++;
 
             childAttrs = visit(ctx.getChild(x));
 
-            if(type != childAttrs.type)
+            if(type != childAttrs.type) {
+                TypeError typeError = new ArrayTypeError(ctx, childAttrs, type);
+                errorVector.add(typeError);
+                System.err.println(typeError.getText());
                 attrs.type = Type.ERROR;
+                return attrs;
+            }
         }
+        attrs.type = Type.ARRAY;
         return attrs;
     }
 
@@ -510,9 +504,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             else
             {
-                TypeError error = new TypeError(ctx, attrs, attrs);
+                TypeError error = new LockTypeError(ctx, attrs);
                 errorVector.add(error);
-                System.err.println(error.getTextForLock());
+                System.err.println(error.getText());
             }
         }
         else
@@ -569,18 +563,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             LHS = RHS;
         }
         return LHS;
-    }
-
-    private boolean isArrayLike(Attrs attrs)
-    {
-        // TODO impove;
-        return attrs.type == Type.ARRAY  || attrs.type == Type.STRING;
-    }
-
-    private boolean isIntLike(Attrs attrs)
-    {
-        // TODO impove;
-        return attrs.type == Type.INT  || attrs.type == Type.BOOL;
     }
 
     @Override
