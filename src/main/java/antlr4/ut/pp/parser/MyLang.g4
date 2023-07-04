@@ -17,15 +17,15 @@ compound_statement: '{' body '}';
 
 expression_statement: expression? ';';
 
-expression: (IDENTIFIER assignment_operator (atomic_expr | logical_or_expression))
+expression: (IDENTIFIER assignment_operator (atomic_expr | postfix_expr | logical_or_expression))
             | logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
 logical_and_expression: relational_expr ('&&' relational_expr)*;
 relational_expr: additive_expr (relational_operator additive_expr)*;
 additive_expr: multi_expr (additive_operator multi_expr)*; // We can add unary operator and so on with this hierarchy
 multi_expr: postfix_expr (multi_operator postfix_expr)*;
-postfix_expr: atomic_expr
-            | postfix_expr '[' expression ']';
+postfix_expr: var_call '[' (primitive_type | expression) ']'
+            | atomic_expr;
 atomic_expr:  primitive_type
             | var_call
             | get_thread_id_expression
@@ -49,15 +49,14 @@ else_part: 'else' compound_statement;
 
 fork_expression: FORK compound_statement;
 get_thread_id_expression: TID;
-join_statement: JOIN expression;
+join_statement: JOIN (var_call | expression);
 
 lock_statement: LOCK IDENTIFIER
               | UNLOCK IDENTIFIER;
 
 var_def: ((SHARED)? 'var') IDENTIFIER '=' (atomic_expr | expression) ';' ;
 
-return_statement: 'return' expression ';';
-print_statement: 'print' expression ';';
+print_statement: 'print' (atomic_expr | expression) ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;

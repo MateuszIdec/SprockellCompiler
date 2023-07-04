@@ -179,12 +179,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVar_def(MyLangParser.Var_defContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MyLangParser#print_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

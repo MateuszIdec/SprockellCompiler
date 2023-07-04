@@ -288,16 +288,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitVar_def(MyLangParser.Var_defContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MyLangParser#print_statement}.
 	 * @param ctx the parse tree
 	 */
