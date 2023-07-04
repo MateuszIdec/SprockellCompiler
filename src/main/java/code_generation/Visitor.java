@@ -13,12 +13,10 @@ import java.util.Vector;
 public class Visitor extends MyLangBaseVisitor<Attrs> {
     private final Vector<CompilerError> errorVector = new Vector<>();
     private final ArrayList<SymbolTable> symbolTables = new ArrayList<>();
-    private final ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private final MemoryManager memoryManager = new MemoryManager();
     private int TID;
     private int threadCounter;
     private SymbolTable currSymbolTable  = null;
-
 
     public Vector<CompilerError> getErrorVector() {
         return new Vector<>(errorVector);
@@ -40,7 +38,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             symbolTables.add(new SymbolTable());
             currSymbolTable = symbolTables.get(this.TID);
 
-            code.add(new ArrayList<>());
+//            code.add(new ArrayList<>());
 
             int globalVarAddress = memoryManager.allocateGlobalVariable();
             addTIDSymbolToSymbolTable(globalVarAddress);
@@ -111,10 +109,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
         else {
             address = memoryManager.createNewVariable(TID, 1);
-            ArrayList<String> currentCode = code.get(TID);
-            currentCode.add("Pop regA");
-            String storeInstruction = "Store regA (DirAddr " + address + ")";
-            currentCode.add(storeInstruction);
+
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.storeFromRegA(address);
         }
@@ -153,11 +148,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 attrs.type = Type.ERROR;
             }
             else {
-
                 SymbolTable st = symbolTables.get(TID);
                 Symbol s = st.getSymbol(attrs.name);
-
                 CodeGenerator.MachineCode.popRegister("regA");
+
                 if(s.isShared) {
                     CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
                 }
@@ -183,8 +177,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
-        else
-        {
+        else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -196,9 +189,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
-        {
+        } else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -211,8 +202,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
-        else
-        {
+        else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -229,18 +219,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.computeEqual();
 
-//            int currentInstructionNr = currCode.size();
-//            CodeGenerator.MachineCode.branchReserveLine();
             CodeGenerator.MachineCode.Action.ifStatementBegin();
             visit(ctx.getChild(2));
 
-//            int instructionNrAfterIfBody = currCode.size();
-//            int label = instructionNrAfterIfBody - currentInstructionNr;
-//            branchInstruction += "( Rel " + label + " )";
-//            currCode.set(currentInstructionNr, branchInstruction);
             CodeGenerator.MachineCode.Action.ifStatementEnd();
-//            CodeGenerator.MachineCode.Action.branchClaimReserved(currentInstructionNr, branchInstruction);
-            attrs.type = Type.BOOL; // TODO why? If not usable then include in for loop
+            attrs.type = Type.BOOL;
         }
         // Visit all else/ elif statements
         else {
@@ -273,11 +256,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitAdditive_expr(MyLangParser.Additive_exprContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
-        {
+        } else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -286,10 +268,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitMulti_expr(MyLangParser.Multi_exprContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
+        } else
             attrs = manyOperation(ctx);
 
         return attrs;
@@ -299,9 +281,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitPostfix_expr(MyLangParser.Postfix_exprContext ctx) {
         Attrs attrs = new Attrs();
         int child_count = ctx.getChildCount();
+
         if(child_count == 1) {
             attrs = visit(ctx.getChild(0));
-        } else if (child_count == 4)
+        }
+        else if (child_count == 4)
         {
             if (Objects.equals(ctx.getChild(1).getText(), "["))
             {
@@ -417,9 +401,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitCompound_type(MyLangParser.Compound_typeContext ctx) {
         // TODO what about array?
-        Attrs attrs = new Attrs();
-        if(ctx.STRING() != null)
-            attrs.type = Type.STRING; // why you build attr if it is not returned?
         return visit(ctx.getChild(0));
     }
 
@@ -475,25 +456,14 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             SymbolTable newST = SymbolTable.provideSymbolTableForFork(currSymbolTable, newThreadIsRunningAddress);
             symbolTables.add(newST);
             currSymbolTable = newST;
-            ArrayList<String> newThreadCode = new ArrayList<>();
-            code.add(newThreadCode);
-//            currCode = newThreadCode;
             TID = threadCounter;
             threadCounter ++;
 
-            //TODO remove this code assuring correct behavior
-            newThreadCode.add("ReadInstr (DirAddr "+ newThreadIsRunningAddress + ")");
-            newThreadCode.add("Receive regA");
-            newThreadCode.add("Compute Equal regA reg0 regA");
-            newThreadCode.add("Branch regA (Rel (-3))");
             CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress);
             visit(ctx.compound_statement());
-            newThreadCode.add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")");
-            newThreadCode.add("EndProg");
             CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress);
 
             this.TID = scopeTID;
-//            this.currCode = scopeCode;
             this.currSymbolTable = scopeST;
         } catch (Exception e) {
             throw new RuntimeException(e);
