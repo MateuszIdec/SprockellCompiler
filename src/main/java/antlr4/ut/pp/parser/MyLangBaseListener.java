@@ -408,18 +408,6 @@ public class MyLangBaseListener implements MyLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitArray(MyLangParser.ArrayContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArgs(MyLangParser.ArgsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArgs(MyLangParser.ArgsContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

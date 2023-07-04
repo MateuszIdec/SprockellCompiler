@@ -208,10 +208,4 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#args}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArgs(MyLangParser.ArgsContext ctx);
 }

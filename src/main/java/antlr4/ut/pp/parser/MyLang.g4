@@ -54,16 +54,15 @@ join_statement: JOIN (var_call | expression);
 lock_statement: LOCK IDENTIFIER
               | UNLOCK IDENTIFIER;
 
-var_def: ((SHARED)? 'var') IDENTIFIER '=' (atomic_expr | expression) ';' ;
+var_def: ((SHARED)? 'var') IDENTIFIER '=' (atomic_expr | postfix_expr | expression) ';' ;
 
 print_statement: 'print' (atomic_expr | expression) ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;
 compound_type: array | STRING;
-array: '[' args ']';
+array: '[' ((atomic_expr | expression) (',' (atomic_expr | expression))*)? ']';
 
-args: ((atomic_expr | expression) (',' (atomic_expr | expression))*)?;
 
 BOOL: 'True' | 'False';
 FORK: 'fork';
