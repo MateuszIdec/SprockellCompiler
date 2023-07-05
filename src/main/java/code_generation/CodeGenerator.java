@@ -204,7 +204,7 @@ public class CodeGenerator {
         }
 
         public static void computeOperationCode(String operationCode) {
-            code.get(threadID).add("Compute " + operationCode + " regA regB regA");
+            code.get(threadID).add("Compute " + operationCode + "regA regB regA");
         }
 
         public static void branchWithRel(String register, String relValue) {

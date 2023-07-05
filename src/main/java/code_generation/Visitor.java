@@ -1,11 +1,11 @@
 package code_generation;
 
-import antlr4.ut.pp.parser.MyLangBaseVisitor;
-import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import errors.*;
 import errors.OutOfMemoryError;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -107,12 +107,16 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 return attrs;
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
-        } else {
+        } else if(RHSattrs.address == -1) {
             address = memoryManager.createNewVariable(TID, 1);
 
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.storeFromRegA(address);
+        } else {
+            address = RHSattrs.address;
         }
+
+        System.out.println("Var_def address " + address);
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
@@ -140,8 +144,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 System.err.println(error.getText());
                 errorVector.add(error);
                 return attrs;
-            } else {
-                attrs.type =  currSymbolTable.getType(attrs.name);
             }
             if (!areCompatible(attrs ,value)) {
                 TypeError error = new TypeError(ctx, attrs, value);
@@ -293,9 +295,16 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             if(symbolTables.get(TID).contains(varName)) {
                 attrs = visit(ctx.getChild(2));
+                int address = symbolTables.get(TID).getAddress(varName);
+                int offset = Integer.parseInt(attrs.name);
 
+                CodeGenerator.MachineCode.popRegister("regA");
+                CodeGenerator.MachineCode.loadImmediate(Integer.toString(address), "regB");
+                CodeGenerator.MachineCode.computeOperationCode("Eq");
+                CodeGenerator.MachineCode.loadDirAddr("regA");
+                CodeGenerator.MachineCode.pushRegister("regA");
             } else {
-              attrs.type = Type.ERROR;
+                attrs.type = Type.ERROR;
             }
         }
         return attrs;
@@ -345,7 +354,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
-                CodeGenerator.MachineCode.loadDirAddr(address);
+                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
 
             CodeGenerator.MachineCode.pushRegister("regA");
         }
@@ -372,11 +381,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = Type.BOOL;
             if (ctx.BOOL().getText().equals("True"))
                 primitiveTypeValue = "1";
-            else
-                primitiveTypeValue = "0";
         }
 
-        CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue);
+        CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
         CodeGenerator.MachineCode.pushRegister("regA");
         return attrs;
     }
@@ -399,10 +406,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
-        // TODO move the responsibility of checking if the same type to visit array
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(1));
         Type type = childAttrs.type;
+
+        attrs.address = memoryManager.createNewVariable(TID, 1);
+        System.out.println("Address for array " + attrs.address);
+        CodeGenerator.MachineCode.storeFromRegA(attrs.address);
 
         for(int x = 3; x < ctx.getChildCount() - 1; x+=2) {
             if(ctx.getChild(x).getText().equals(","))
@@ -417,10 +427,17 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 attrs.type = Type.ERROR;
                 return attrs;
             }
+
+            int address = memoryManager.createNewVariable(TID, 1);
+            CodeGenerator.MachineCode.storeFromRegA(address);
         }
+
         attrs.type = Type.ARRAY;
+        attrs.size = (ctx.getChildCount() - 1) / 2;
+
         return attrs;
     }
+
 
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
@@ -540,9 +557,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return LHS;
 
         Attrs RHS;
+        String operationCode = "";
         for(int i = 2; i < ctx.getChildCount(); i+=2)
         {
-            String operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
+            operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
 
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
@@ -562,6 +580,12 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.pushRegister("regA");
             LHS = RHS;
         }
+
+        assert operationCode != null;
+        if(operationCode.equals("Add ") || operationCode.equals("Sub ") | operationCode.equals("Sub "))
+            return LHS;
+
+        LHS.type = Type.BOOL;
         return LHS;
     }
 
