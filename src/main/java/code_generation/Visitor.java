@@ -292,16 +292,26 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         else if (child_count == 4)
         {
             String varName = ctx.getChild(0).getText();
+            visit(ctx.getChild(2));
+            if(currSymbolTable.contains(varName)) {
+                if(currSymbolTable.getSize(varName) > 1) {
+                    attrs.type = currSymbolTable.getType(varName);
+                    attrs.address = currSymbolTable.getAddress(varName);
+                    attrs.size = 1;
+                    int address = symbolTables.get(TID).getAddress(varName);
 
-            if(symbolTables.get(TID).contains(varName)) {
-                attrs.type = currSymbolTable.getType(varName);
-                attrs.address = currSymbolTable.getAddress(varName);
-                attrs.size = currSymbolTable.getSize(varName);
-                int address = symbolTables.get(TID).getAddress(varName);
-
-                CodeGenerator.MachineCode.Action.loadArrayElementIntoRegister(address);
+                    CodeGenerator.MachineCode.Action.loadArrayElementIntoRegister(address);
+                } else {
+                    TypeError error = new TypeError(ctx, attrs);
+                    errorVector.add(error);
+                    attrs.type = Type.ERROR;
+                    return attrs;
+                }
             } else {
                 attrs.type = Type.ERROR;
+                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                errorVector.add(error);
+                return attrs;
             }
         }
         return attrs;
@@ -342,9 +352,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(currSymbolTable.contains(attrs.name)) {
             int address = currSymbolTable.getAddress(attrs.name);
-            attrs.type = currSymbolTable.getType(attrs.name);
             attrs.address = currSymbolTable.getAddress(attrs.name);
             attrs.size = currSymbolTable.getSize(attrs.name);
+
+            if(attrs.size > 1)
+                attrs.type = Type.ARRAY;
 
             if(currSymbolTable.isShared(attrs.name)){
                 CodeGenerator.MachineCode.readInstrWithDirAddr(address);
@@ -381,10 +393,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
 
-        // Push to register if the parent is not an array
-        if(ctx.parent.getRuleIndex() != 32)
+        // Push to register if the parent is not an array or string
+        if(ctx.parent.getRuleIndex() != 32 && ctx.parent.getRuleIndex() != 11)
             CodeGenerator.MachineCode.pushRegister("regA");
-
 
         return attrs;
     }
@@ -450,7 +461,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.storeFromRegA(address);
         }
 
-        attrs.type = Type.ARRAY;
+        attrs.type = type;
         attrs.size = (ctx.getChildCount() - 1) / 2;
 
         return attrs;
@@ -610,10 +621,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return null;
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();
-        if(attrs.type.equals(Type.STRING))
+        else if(attrs.type.equals(Type.STRING))
             CodeGenerator.MachineCode.Action.printString(attrs.address, attrs.size);
-        if(attrs.type.equals(Type.ARRAY))
-            CodeGenerator.MachineCode.Action.printNumber();
+        else if(attrs.size > 1) {
+            attrs.type = Type.ARRAY;
+            PrintError printError = new PrintError(ctx, attrs);
+            errorVector.add(printError);
+        }
         return null;
     }
 }

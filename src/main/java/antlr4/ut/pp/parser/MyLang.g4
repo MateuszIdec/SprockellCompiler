@@ -56,7 +56,7 @@ lock_statement: LOCK IDENTIFIER
 
 var_def: ((SHARED)? 'var') IDENTIFIER '=' (atomic_expr | postfix_expr | expression) ';' ;
 
-print_statement: 'print' (atomic_expr | postfix_expr |expression) ';';
+print_statement: 'print' (atomic_expr | postfix_expr | expression) ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;

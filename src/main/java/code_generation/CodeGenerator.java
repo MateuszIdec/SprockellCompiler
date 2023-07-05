@@ -384,9 +384,9 @@ public class CodeGenerator {
                 code.get(threadID).add("WriteInstr reg0 (DirAddr "+ address +")");
             }
 
-            public static void loadArrayElementIntoRegister(int firstArrayElementAddress) {
-                popRegister("regA");
-                loadImmediate(Integer.toString(firstArrayElementAddress), "regB");
+            public static void loadArrayElementIntoRegister(int firstElementAddress) {
+                // regA containing array index was loaded by primitive_type
+                loadImmediate(Integer.toString(firstElementAddress), "regB");
                 computeOperationCode("Add ");
                 loadFromAddressInRegister("regA", "regA");
                 pushRegister("regA");

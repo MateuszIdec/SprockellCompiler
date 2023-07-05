@@ -72,7 +72,7 @@ public class TestSyntax {
         parseString("varx;");
         assertEquals(0, lexerErrors);
         assertEquals(0, parserErrors);
+
+
     }
-
-
 }

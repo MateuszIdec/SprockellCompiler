@@ -207,11 +207,17 @@ public class TestParser {
 
         String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
         assertEquals(1, parseString(input2));
+
+        String input3 = "var x = [1,2,3]; print x;";
+        assertEquals(1, parseString(input3));
     }
 
     @Test
     public void testString() {
         String input = "var x = \"a\";";
         assertEquals(0, parseString(input));
+
+        String input1 = "var x = \"1ab2\"; print x;";
+        assertEquals(0, parseString(input1));
     }
 }
