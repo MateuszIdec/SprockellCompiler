@@ -73,7 +73,7 @@ public class CodeGenerator {
         StringBuilder result = new StringBuilder();
         int threadCount = 0;
 
-        result.append("module Main where \n\nimport Sprockell \n\n");
+        result.append("module Main where\n\nimport Sprockell\nimport Data.Char\n\n");
         for(ArrayList<String> threadCode : code) {
             result.append("prog").append(threadCount++).append(" = ");
             result.append(prettyCode(threadCode.toString())).append("\n\n");
@@ -203,6 +203,10 @@ public class CodeGenerator {
             code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") " + register);
         }
 
+        public static void loadCharacter(char character, String register) {
+            code.get(threadID).add("Load (ImmValue $ ord '" + character + "' ) " + register);
+        }
+
         public static void loadFromAddressInRegister(String registerContainingAddress, String targetRegister) {
             code.get(threadID).add("Load (IndAddr " + registerContainingAddress +") " + targetRegister);
         }
@@ -225,6 +229,14 @@ public class CodeGenerator {
 
         public static void jump(int startOfWhile) {
             code.get(threadID).add("Jump (Abs " + startOfWhile + ")");
+        }
+
+        public static void numberOutput() {
+            code.get(threadID).add("WriteInstr regA numberIO");
+        }
+
+        public static void charOutput() {
+            code.get(threadID).add("WriteInstr regA charIO");
         }
 
         public static void readInstrWithDirAddr(int address) {
@@ -305,15 +317,24 @@ public class CodeGenerator {
                 code.get(threadID).set(branchReservedLineID, branchInstruction);
             }
 
-            public static void readIO() {
+            public static void readNumber() {
                 code.get(threadID).add("ReadInstr numberIO");
                 receiveRegister("regA");
                 pushRegister("regA");
             }
 
-            public static void writeIO() {
+            public static void printNumber() {
                 popRegister("regA");
-                code.get(threadID).add("WriteInstr regA numberIO");
+                numberOutput();
+            }
+
+            public static void printString(int firstElementAddress, int length) {
+                int lastElementAddress = firstElementAddress + length;
+
+                for(int charAddress = firstElementAddress; charAddress < lastElementAddress; charAddress++) {
+                    loadDirAddr(Integer.toString(charAddress));
+                    charOutput();
+                }
             }
 
             public static void threadID(int address) {
