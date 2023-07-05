@@ -362,6 +362,14 @@ public class CodeGenerator {
             public static void placeLock(int address) {
                 code.get(threadID).add("WriteInstr reg0 (DirAddr "+ address +")");
             }
+
+            public static void loadArrayElementIntoRegister(int firstArrayElementAddress) {
+                popRegister("regA");
+                loadImmediate(Integer.toString(firstArrayElementAddress), "regB");
+                computeOperationCode("Add ");
+                loadFromAddressInRegister("regA", "regA");
+                pushRegister("regA");
+            }
         }
     }
 }

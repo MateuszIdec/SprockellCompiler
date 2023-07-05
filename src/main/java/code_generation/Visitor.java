@@ -5,7 +5,6 @@ import errors.*;
 import errors.OutOfMemoryError;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -36,8 +35,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             symbolTables.add(new SymbolTable());
             currSymbolTable = symbolTables.get(this.TID);
-
-//            code.add(new ArrayList<>());
 
             int globalVarAddress = memoryManager.allocateGlobalVariable();
             addTIDSymbolToSymbolTable(globalVarAddress);
@@ -95,6 +92,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
         int address;
 
+        // In case of shared variable, we allocate it in global memory
         if(sharedVarCase == 1)
         {
             try {
@@ -106,7 +104,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 return attrs;
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
-        } else if(RHSattrs.address == -1) {
+        }
+        // RHSattrs.address = -1 when the on the right hand side is a primitive type
+        else if(RHSattrs.address == -1) {
             address = memoryManager.createNewVariable(TID, 1);
 
             CodeGenerator.MachineCode.popRegister("regA");
@@ -122,6 +122,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         symbol.type = attrs.type;
         symbol.address = address;
 
+        // Add newly defined variable into a symbol table for this scope
         currSymbolTable.add(attrs.name, symbol);
         return attrs;
     }
@@ -227,6 +228,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.Action.ifStatementEnd();
             attrs.type = Type.BOOL;
         }
+
         // Visit all else/ elif statements
         else {
             // TODO close scope
@@ -295,11 +297,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 attrs = visit(ctx.getChild(2));
                 int address = symbolTables.get(TID).getAddress(varName);
 
-                CodeGenerator.MachineCode.popRegister("regA");
-                CodeGenerator.MachineCode.loadImmediate(Integer.toString(address), "regB");
-                CodeGenerator.MachineCode.computeOperationCode("Add ");
-                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
-                CodeGenerator.MachineCode.pushRegister("regA");
+                CodeGenerator.MachineCode.Action.loadArrayElementIntoRegister(address);
             } else {
                 attrs.type = Type.ERROR;
             }
@@ -541,7 +539,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     private boolean areCompatible(Attrs attr1, Attrs attrs2)
     {
-        //TODO improve
         return getType(attr1).equals(getType(attrs2));
     }
 
