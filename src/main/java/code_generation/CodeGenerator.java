@@ -203,6 +203,10 @@ public class CodeGenerator {
             code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") " + register);
         }
 
+        public static void loadCharacter(char character, String register) {
+            code.get(threadID).add("Load (ImmValue $ ord '" + character + "' ) " + register);
+        }
+
         public static void loadFromAddressInRegister(String registerContainingAddress, String targetRegister) {
             code.get(threadID).add("Load (IndAddr " + registerContainingAddress +") " + targetRegister);
         }
@@ -311,9 +315,14 @@ public class CodeGenerator {
                 pushRegister("regA");
             }
 
-            public static void writeIO() {
+            public static void numberIO() {
                 popRegister("regA");
                 code.get(threadID).add("WriteInstr regA numberIO");
+            }
+
+            public static void charIO() {
+                popRegister("regA");
+                code.get(threadID).add("WriteInstr regA charIO");
             }
 
             public static void threadID(int address) {
