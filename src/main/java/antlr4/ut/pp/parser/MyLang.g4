@@ -61,7 +61,7 @@ read_expression: 'read';
 
 primitive_type: INT | BOOL;
 compound_type: array | STRING;
-array: '[' ((atomic_expr | expression) (',' (atomic_expr | expression))*)? ']';
+array: '[' ((primitive_type | atomic_expr | expression) (',' (primitive_type | atomic_expr | expression))*)? ']';
 
 
 BOOL: 'True' | 'False';

@@ -203,6 +203,10 @@ public class CodeGenerator {
             code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") " + register);
         }
 
+        public static void loadFromAddressInRegister(String registerContainingAddress, String targetRegister) {
+            code.get(threadID).add("Load (IndAddr " + registerContainingAddress +") " + targetRegister);
+        }
+
         public static void computeOperationCode(String operationCode) {
             code.get(threadID).add("Compute " + operationCode + "regA regB regA");
         }

@@ -296,12 +296,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             if(symbolTables.get(TID).contains(varName)) {
                 attrs = visit(ctx.getChild(2));
                 int address = symbolTables.get(TID).getAddress(varName);
-                int offset = Integer.parseInt(attrs.name);
 
                 CodeGenerator.MachineCode.popRegister("regA");
                 CodeGenerator.MachineCode.loadImmediate(Integer.toString(address), "regB");
-                CodeGenerator.MachineCode.computeOperationCode("Eq");
-                CodeGenerator.MachineCode.loadDirAddr("regA");
+                CodeGenerator.MachineCode.computeOperationCode("Add ");
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
                 CodeGenerator.MachineCode.pushRegister("regA");
             } else {
                 attrs.type = Type.ERROR;
@@ -384,7 +383,12 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
-        CodeGenerator.MachineCode.pushRegister("regA");
+
+        // Push to register if the parent is not an array
+        if(ctx.parent.getRuleIndex() != 32)
+            CodeGenerator.MachineCode.pushRegister("regA");
+
+
         return attrs;
     }
 
