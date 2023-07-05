@@ -34,7 +34,6 @@ public class TestCodeGeneration {
         return prologue + text + epilogue;
     }
 
-
     @Before
     public void setup() {
         visitor = new Visitor();

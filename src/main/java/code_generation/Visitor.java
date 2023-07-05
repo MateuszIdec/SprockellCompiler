@@ -89,7 +89,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             RedefinitonError error = new RedefinitonError(ctx, attrs);
             errorVector.add(error);
-            System.err.println(error.getText());
             return attrs;
         }
 
@@ -116,7 +115,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             address = RHSattrs.address;
         }
 
-        System.out.println("Var_def address " + address);
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
@@ -141,14 +139,14 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             if(!currSymbolTable.contains(attrs.name)) {
                 attrs.type = Type.ERROR;
                 NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-                System.err.println(error.getText());
                 errorVector.add(error);
                 return attrs;
             }
+            attrs.type = currSymbolTable.getType(attrs.name);
+
             if (!areCompatible(attrs ,value)) {
                 TypeError error = new TypeError(ctx, attrs, value);
                 errorVector.add(error);
-                System.err.println(error.getText());
                 attrs.type = Type.ERROR;
             }
             else {
@@ -362,7 +360,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
             attrs.type = Type.ERROR;
             errorVector.add(error);
-            System.err.println(error.getText());
         }
         return attrs;
     }
@@ -415,7 +412,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Type type = childAttrs.type;
 
         attrs.address = memoryManager.createNewVariable(TID, 1);
-        System.out.println("Address for array " + attrs.address);
         CodeGenerator.MachineCode.storeFromRegA(attrs.address);
 
         for(int x = 3; x < ctx.getChildCount() - 1; x+=2) {
@@ -427,7 +423,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             if(type != childAttrs.type) {
                 TypeError typeError = new ArrayTypeError(ctx, childAttrs, type);
                 errorVector.add(typeError);
-                System.err.println(typeError.getText());
                 attrs.type = Type.ERROR;
                 return attrs;
             }
@@ -495,7 +490,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(getType(fork) != Type.FORK)
         {
             TypeError error = new TypeError(ctx, fork, Type.FORK);
-            System.err.println(error.getText());
             errorVector.add(error);
         }
         CodeGenerator.MachineCode.Action.join();
@@ -527,14 +521,12 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             {
                 TypeError error = new LockTypeError(ctx, attrs);
                 errorVector.add(error);
-                System.err.println(error.getText());
             }
         }
         else
         {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
             errorVector.add(error);
-            System.err.println(error.getText());
         }
         return attrs;
     }
@@ -576,7 +568,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             {
                 TypeError error = new TypeError(ctx, LHS, RHS);
                 errorVector.add(error);
-                System.err.println(error.getText());
             }
             CodeGenerator.MachineCode.popRegister("regB");
             CodeGenerator.MachineCode.popRegister("regA");

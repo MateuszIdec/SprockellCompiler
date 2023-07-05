@@ -205,7 +205,7 @@ public class TestParser {
         String input1 = "var x = [1,2,3]; var y = x[2];";
         assertEquals(0, parseString(input1));
 
-//        String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
-//        assertEquals(1, parseString(input2));
+        String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
+        assertEquals(1, parseString(input2));
     }
 }
