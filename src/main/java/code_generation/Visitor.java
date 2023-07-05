@@ -399,7 +399,17 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitCompound_type(MyLangParser.Compound_typeContext ctx) {
-        // TODO what about array?
+        if(ctx.STRING() != null) {
+            Attrs attrs = new Attrs();
+            attrs.name = ctx.STRING().getText();
+            attrs.type = Type.STRING;
+
+            for(int x = 0; x < attrs.name.length(); x++) {
+
+            }
+
+            return attrs;
+        }
         return visit(ctx.getChild(0));
     }
 
@@ -587,7 +597,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
-        CodeGenerator.MachineCode.Action.writeIO();
+        CodeGenerator.MachineCode.Action.numberIO();
         return null;
     }
 }
