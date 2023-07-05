@@ -76,6 +76,10 @@ public class SymbolTable {
     {
         return Objects.requireNonNull(getSymbol(id)).address;
     }
+
+    public int getSize(String id) {
+        return getSymbol(id).size;
+    }
     public boolean isShared(String id)
     {
         return Objects.requireNonNull(getSymbol(id)).isShared;

@@ -4,6 +4,7 @@ public class Symbol {
     public Type type = Type.ERROR;
     public boolean isShared = false;
     public int address;
+    public int size = 1;
 
     public Symbol deepCopy()
     {
@@ -11,6 +12,8 @@ public class Symbol {
         s.type = this.type;
         s.isShared = this.isShared;
         s.address = this.address;
+        s.size = this.size;
+
         return s;
     }
 }

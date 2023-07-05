@@ -117,9 +117,10 @@ public class TestCodeGeneration {
         assertEquals(petersonCode, CodeGenerator.generateCode(peterson, false));
     }
 
-    String bankCode = "module Main where \n" +
+    String bankCode = "module Main where\n" +
             "\n" +
-            "import Sprockell \n" +
+            "import Sprockell\n" +
+            "import Data.Char\n" +
             "\n" +
             "prog0 = [Load (ImmValue 1) regA\n" +
             "      , WriteInstr regA (DirAddr 0)\n" +
@@ -279,9 +280,10 @@ public class TestCodeGeneration {
             "\n" +
             "main = run [prog0,prog1,prog2]";
 
-    String petersonCode = "module Main where \n" +
+    String petersonCode = "module Main where\n" +
             "\n" +
-            "import Sprockell \n" +
+            "import Sprockell\n" +
+            "import Data.Char\n" +
             "\n" +
             "prog0 = [Load (ImmValue 1) regA\n" +
             "      , WriteInstr regA (DirAddr 0)\n" +

@@ -121,6 +121,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         symbol.type = attrs.type;
         symbol.address = address;
+        symbol.size = RHSattrs.size;
 
         // Add newly defined variable into a symbol table for this scope
         currSymbolTable.add(attrs.name, symbol);
@@ -307,20 +308,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
-        Attrs attrs = new Attrs();
+        if(ctx.getChildCount() == 1)
+           return visit(ctx.getChild(0));
 
-        if(ctx.getChildCount() == 1) {
-            attrs = visit(ctx.getChild(0));
-        }
-        else if (ctx.getChildCount() == 3)
-            attrs = visit(ctx.getChild(1));
+        if (ctx.getChildCount() == 3)
+            return visit(ctx.getChild(1));
 
-        return attrs;
+        return null;
     }
 
     @Override
     public Attrs visitRead_expression(MyLangParser.Read_expressionContext ctx) {
-        CodeGenerator.MachineCode.Action.readIO();
+        CodeGenerator.MachineCode.Action.readNumber();
         Attrs attrs = new Attrs();
         attrs.type = Type.INT;
         return attrs;
@@ -343,6 +342,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(currSymbolTable.contains(attrs.name)) {
             int address = currSymbolTable.getAddress(attrs.name);
             attrs.type = currSymbolTable.getType(attrs.name);
+            attrs.address = currSymbolTable.getAddress(attrs.name);
+            attrs.size = currSymbolTable.getSize(attrs.name);
+
+            if(attrs.type.equals(Type.STRING)) {
+                System.out.println("String address: " + attrs.address);
+                System.out.println("String size: " + attrs.size);
+            }
 
             if(currSymbolTable.isShared(attrs.name)){
                 CodeGenerator.MachineCode.readInstrWithDirAddr(address);
@@ -404,6 +410,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.name = ctx.STRING().getText();
             attrs.type = Type.STRING;
             attrs.address = memoryManager.createNewVariable(TID, 1);
+            attrs.size = attrs.name.length() - 2;
 
             CodeGenerator.MachineCode.loadCharacter(attrs.name.charAt(1), "regA");
             CodeGenerator.MachineCode.storeFromRegA(attrs.address);
@@ -413,14 +420,16 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.loadCharacter(attrs.name.charAt(x), "regA");
                 CodeGenerator.MachineCode.storeFromRegA(address);
             }
-
             return attrs;
         }
+
         return visit(ctx.getChild(0));
     }
 
     @Override
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
+        // TODO use parent children amount to decide if the variable is shared
+//        System.out.println("var_def child count: " + ctx.parent.parent.parent.getChildCount());
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(1));
         Type type = childAttrs.type;
@@ -603,7 +612,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
-        CodeGenerator.MachineCode.Action.numberIO();
+        if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
+            CodeGenerator.MachineCode.Action.printNumber();
+        if(attrs.type.equals(Type.STRING))
+            CodeGenerator.MachineCode.Action.printString(attrs.address, attrs.size);
+
         return null;
     }
 }
