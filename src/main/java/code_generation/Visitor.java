@@ -114,7 +114,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         } else {
             address = RHSattrs.address;
         }
-
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
@@ -295,7 +294,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             String varName = ctx.getChild(0).getText();
 
             if(symbolTables.get(TID).contains(varName)) {
-                attrs = visit(ctx.getChild(2));
+                attrs.type = currSymbolTable.getType(varName);
+                attrs.address = currSymbolTable.getAddress(varName);
+                attrs.size = currSymbolTable.getSize(varName);
                 int address = symbolTables.get(TID).getAddress(varName);
 
                 CodeGenerator.MachineCode.Action.loadArrayElementIntoRegister(address);
@@ -344,11 +345,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = currSymbolTable.getType(attrs.name);
             attrs.address = currSymbolTable.getAddress(attrs.name);
             attrs.size = currSymbolTable.getSize(attrs.name);
-
-            if(attrs.type.equals(Type.STRING)) {
-                System.out.println("String address: " + attrs.address);
-                System.out.println("String size: " + attrs.size);
-            }
 
             if(currSymbolTable.isShared(attrs.name)){
                 CodeGenerator.MachineCode.readInstrWithDirAddr(address);
@@ -616,7 +612,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.Action.printNumber();
         if(attrs.type.equals(Type.STRING))
             CodeGenerator.MachineCode.Action.printString(attrs.address, attrs.size);
-
+        if(attrs.type.equals(Type.ARRAY))
+            CodeGenerator.MachineCode.Action.printNumber();
         return null;
     }
 }
