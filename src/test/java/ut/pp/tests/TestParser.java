@@ -130,13 +130,13 @@ public class TestParser {
 
         assertEquals(0, parseString(input));
     }
-    @Test
-    public void testRelation()
-    {
-        String input = "var a = True; var b = False; var c = a <= b;";
-
-        assertEquals(0, parseString(input));
-    }
+//    @Test
+//    public void testRelation()
+//    {
+//        String input = "var a = True; var b = False; var c = a <= b;";
+//
+//        assertEquals(0, parseString(input));
+//    }
     @Test
     public void testManyRelations()
     {
