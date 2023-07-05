@@ -19,13 +19,20 @@ import java.nio.file.Path;
  * Responsible for generating the machine code from the source language.
  */
 public class CodeGenerator {
-    private static final ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
+    private static ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private static int threadID = 0;
     private static int threadCounter = 1;
     private static int scopeID = 0;
 
     public static int getCurrentCodeSize() {
         return code.get(threadID).size();
+    }
+
+    public static void reset() {
+        threadID = 0;
+        threadCounter = 1;
+        scopeID = 0;
+        code = new ArrayList<>(new ArrayList<>());
     }
 
     /**
@@ -75,16 +82,16 @@ public class CodeGenerator {
         result.append("\n\nmain = run [");
         for(int id = 0; id < threadCount - 1; id++) {
             result.append("prog").append(id);
-                result.append(",");
+            result.append(",");
         }
         result.append("prog").append(threadCount - 1).append("]");
 
         if(consolePrint) {
-                System.out.println(prettyCodeWithLineNumbers(result.toString()));
-            }
+            System.out.println(prettyCodeWithLineNumbers(result.toString()));
+        }
 
         return result.toString();
-        }
+    }
 
 
     /**
