@@ -24,15 +24,15 @@ public class CodeGenerator {
     private static int threadCounter = 1;
     private static int scopeID = 0;
 
-    public static int getCurrentCodeSize() {
-        return code.get(threadID).size();
-    }
-
     public static void reset() {
         threadID = 0;
         threadCounter = 1;
         scopeID = 0;
         code = new ArrayList<>(new ArrayList<>());
+    }
+
+    public static int getCurrentCodeSize() {
+        return code.get(threadID).size();
     }
 
     /**
@@ -195,16 +195,16 @@ public class CodeGenerator {
             code.get(threadID).add("Compute Equal regA reg0 regA");
         }
 
-        public static void loadDirAddr(int address) {
+        public static void loadDirAddr(String address) {
             code.get(threadID).add("Load (DirAddr " + address + ") regA");
         }
 
-        public static void loadImmediate(String primitiveTypeValue) {
-            code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") regA");
+        public static void loadImmediate(String primitiveTypeValue, String register) {
+            code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") " + register);
         }
 
         public static void computeOperationCode(String operationCode) {
-            code.get(threadID).add("Compute " + operationCode + "regA regB regA");
+            code.get(threadID).add("Compute " + operationCode + " regA regB regA");
         }
 
         public static void branchWithRel(String register, String relValue) {
@@ -262,7 +262,7 @@ public class CodeGenerator {
                     code.add(new ArrayList<>());
                 }
 
-                loadImmediate("1");
+                loadImmediate("1", "regA");
                 writeInstrFromRegA(globalVarAddress);
             }
 
@@ -313,7 +313,7 @@ public class CodeGenerator {
             }
 
             public static void threadID(int address) {
-                loadImmediate(Integer.toString(address));
+                loadImmediate(Integer.toString(address), "regA");
                 pushRegister("regA");
             }
 
@@ -335,9 +335,9 @@ public class CodeGenerator {
             }
 
             public static void forkEnd(int newThreadAddress) {
-                loadImmediate(Integer.toString(newThreadAddress));
+                loadImmediate(Integer.toString(newThreadAddress), "regA");
                 pushRegister("regA");
-                loadImmediate("1");
+                loadImmediate("1", "regA");
                 writeInstrFromRegA(newThreadAddress);
             }
 
