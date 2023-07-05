@@ -105,7 +105,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        // RHSattrs.address = -1 when the on the right hand side is a primitive type
+        // RHSattrs.address = -1 when on the right hand side there is a primitive type
         else if(RHSattrs.address == -1) {
             address = memoryManager.createNewVariable(TID, 1);
 
@@ -403,9 +403,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             Attrs attrs = new Attrs();
             attrs.name = ctx.STRING().getText();
             attrs.type = Type.STRING;
+            attrs.address = memoryManager.createNewVariable(TID, 1);
 
-            for(int x = 0; x < attrs.name.length(); x++) {
+            CodeGenerator.MachineCode.loadCharacter(attrs.name.charAt(1), "regA");
+            CodeGenerator.MachineCode.storeFromRegA(attrs.address);
 
+            for(int x = 2; x < attrs.name.length() - 1; x++) {
+                int address = memoryManager.createNewVariable(TID, 1);
+                CodeGenerator.MachineCode.loadCharacter(attrs.name.charAt(x), "regA");
+                CodeGenerator.MachineCode.storeFromRegA(address);
             }
 
             return attrs;
