@@ -104,7 +104,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = Type.ERROR;
             return attrs;
         }
-        int address = -2;
+        int address;
 
         // In case of shared variable, we allocate it in global memory
         if(symbol.isShared)
@@ -127,10 +127,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         } else {
             address = value.address;
         }
-        // Type of name is inferred from the RHS
+        // Type of name is inferred from the assigned value
         attrs.type = value.type;
         attrs.name = name;
-        System.out.println("[varDef] name: " + name + ", address: " + address + ", type: " + value.type + ", shared: " + symbol.isShared + ", pointer: " + symbol.isPointer);
+//        System.out.println("[varDef] name: " + name + ", address: " + address + ", type: " + value.type + ", shared: " + symbol.isShared + ", pointer: " + symbol.isPointer);
 
         symbol.type = attrs.type;
         symbol.address = address;
@@ -391,10 +391,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 return attrs;
             }
 
-
             if(variable.size > 1 && !variable.type.equals(Type.STRING))
                 attrs.type = Type.ARRAY;
-
 
             if(variable.isShared && isPointerAddressValue) {
                 CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
@@ -423,7 +421,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = Type.ERROR;
             errorVector.add(error);
         }
-
 
         return attrs;
     }
