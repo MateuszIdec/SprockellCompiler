@@ -105,13 +105,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        // RHSattrs.address = -1 when on the right hand side there is a primitive type
-        else if(RHSattrs.address == -1) {
+        // RHSattrs.size = 1 when on the right hand side there is a primitive type
+        // This value was already loaded to register, so we need to allocated memory address for it
+        // and store it in an allocated memory address
+        else if(RHSattrs.size == 1) {
             address = memoryManager.createNewVariable(TID, 1);
 
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.storeFromRegA(address);
-        } else {
+        }
+        // Otherwise it's a compound type, which already was allocated in memory,
+        // We just need to add its address to symbol table
+        else {
             address = RHSattrs.address;
         }
         // Type of name is inferred from the RHS
@@ -395,6 +400,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
+        attrs.size = 1;
 
         // Push to register if the parent is not an array or string
         if(ctx.parent.getRuleIndex() != 32 && ctx.parent.getRuleIndex() != 11)
