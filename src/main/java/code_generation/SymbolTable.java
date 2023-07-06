@@ -85,6 +85,9 @@ public class SymbolTable {
         return Objects.requireNonNull(getSymbol(id)).isShared;
     }
 
+    public boolean isPointer(String id) {
+        return getSymbol(id).isPointer;
+    }
     public Symbol getSymbol(String id)
     {
         int depth = symbolStack.size()-1;

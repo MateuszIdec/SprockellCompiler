@@ -71,13 +71,20 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
+        int pointerCase = 0;
 
         if(ctx.getChild(0).getText().equals("shared")) {
             symbol.isShared = true;
             sharedVarCase = 1;
         }
 
-        String name = ctx.getChild(1 + sharedVarCase).getText();
+        if(ctx.getChild(1 + sharedVarCase).getText().equals("*")) {
+            pointerCase = 1;
+            symbol.isPointer = true;
+        }
+
+        String name;
+            name = ctx.getChild(1 + sharedVarCase + pointerCase).getText();
 
         // Check if variable is already defined in local scope
         if(currSymbolTable.checkLocalScope(name)) {
@@ -89,11 +96,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return attrs;
         }
 
-        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
-        int address;
+        Attrs value = visit(ctx.getChild(3 + sharedVarCase + pointerCase));
+
+        // Pointer can be assigned only variable
+        if(symbol.isPointer && !value.isReference) {
+            errorVector.add(new PointerDefinitionError(ctx, attrs));
+            attrs.type = Type.ERROR;
+            return attrs;
+        }
+        int address = -2;
 
         // In case of shared variable, we allocate it in global memory
-        if(sharedVarCase == 1)
+        if(symbol.isShared)
         {
             try {
                 address = memoryManager.allocateGlobalVariable();
@@ -105,22 +119,22 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        // RHSattrs.address = -1 when on the right hand side there is a primitive type
-        else if(RHSattrs.address == -1) {
+        // value.address = -1 when on the right hand side there is a primitive type
+        else if(value.address == -1) {
             address = memoryManager.createNewVariable(TID, 1);
-
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.storeFromRegA(address);
         } else {
-            address = RHSattrs.address;
+            address = value.address;
         }
         // Type of name is inferred from the RHS
-        attrs.type = RHSattrs.type;
+        attrs.type = value.type;
         attrs.name = name;
+        System.out.println("[varDef] name: " + name + ", address: " + address + ", type: " + value.type + ", shared: " + symbol.isShared + ", pointer: " + symbol.isPointer);
 
         symbol.type = attrs.type;
         symbol.address = address;
-        symbol.size = RHSattrs.size;
+        symbol.size = value.size;
 
         // Add newly defined variable into a symbol table for this scope
         currSymbolTable.add(attrs.name, symbol);
@@ -348,23 +362,58 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.name = ctx.getText();
+        boolean isPointerAddressValue = false;
 
+        // 2 children means it's a reference or pointer
+        if(ctx.getChildCount() == 2) {
+            attrs.name = ctx.getChild(1).getText();
+
+            if(ctx.getChild(0).getText().equals("*")) {
+                isPointerAddressValue = true;
+            }
+            else if(ctx.getChild(0).getText().equals("&")) {
+                attrs.isReference = true;
+            }
+        }
+        else
+            attrs.name = ctx.getText();
+
+//        System.out.println("[varCall] name: " + attrs.name);
         if(currSymbolTable.contains(attrs.name)) {
-            int address = currSymbolTable.getAddress(attrs.name);
-            attrs.address = currSymbolTable.getAddress(attrs.name);
-            attrs.size = currSymbolTable.getSize(attrs.name);
-            attrs.type = currSymbolTable.getType(attrs.name);
+            Symbol variable = currSymbolTable.getSymbol(attrs.name);
+//            attrs.address = variable.address;
+            attrs.size = variable.size;
+            attrs.type = variable.type;
 
-            if(attrs.size > 1 && !attrs.type.equals(Type.STRING))
+            if(isPointerAddressValue && !variable.isPointer) {
+                errorVector.add(new PointerCallError(ctx, attrs));
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+
+
+            if(variable.size > 1 && !variable.type.equals(Type.STRING))
                 attrs.type = Type.ARRAY;
 
-            if(currSymbolTable.isShared(attrs.name)){
-                CodeGenerator.MachineCode.readInstrWithDirAddr(address);
+
+            if(variable.isShared && isPointerAddressValue) {
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
+                CodeGenerator.MachineCode.readInstrWithDirAddr(variable.address);
+                CodeGenerator.MachineCode.receiveRegister("regA");
+            }
+            else if(isPointerAddressValue) {
+                CodeGenerator.MachineCode.loadDirAddr(String.valueOf(variable.address));
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
+            }
+            else if(attrs.isReference) {
+                CodeGenerator.MachineCode.loadImmediate(String.valueOf(variable.address), "regA");
+            }
+            else if(variable.isShared) {
+                CodeGenerator.MachineCode.readInstrWithDirAddr(variable.address);
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
-                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
+                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(variable.address));
 
             CodeGenerator.MachineCode.pushRegister("regA");
         }
@@ -374,6 +423,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             attrs.type = Type.ERROR;
             errorVector.add(error);
         }
+
+
         return attrs;
     }
 
@@ -437,7 +488,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitArray(MyLangParser.ArrayContext ctx) {
         // TODO use parent children amount to decide if the variable is shared
-//        System.out.println("var_def child count: " + ctx.parent.parent.parent.getChildCount());
         Attrs attrs = new Attrs();
         Attrs childAttrs = visit(ctx.getChild(1));
         Type type = childAttrs.type;
@@ -467,7 +517,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         return attrs;
     }
-
 
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {

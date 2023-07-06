@@ -6,7 +6,8 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.Visitor;
-import errors.PointerError;
+import errors.PointerCallError;
+import errors.PointerDefinitionError;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
@@ -226,6 +227,14 @@ public class TestParser {
     public void testPointer() {
         String input = "var *x = 5;";
         parseString(input);
-        assertTrue(visitor.getErrorVector().get(0) instanceof PointerError);
+        assertTrue(visitor.getErrorVector().get(0) instanceof PointerDefinitionError);
+
+        String input1 = "var x = 5; print *x;";
+        parseString(input1);
+        assertTrue(visitor.getErrorVector().get(0) instanceof PointerCallError);
+
+        String input2 = "var x = 5; var ptr = &x; ptr = x;";
+        assertEquals(0, parseString(input2));
+
     }
 }
