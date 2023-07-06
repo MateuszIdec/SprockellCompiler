@@ -54,7 +54,7 @@ join_statement: JOIN (var_call | expression);
 lock_statement: LOCK IDENTIFIER
               | UNLOCK IDENTIFIER;
 
-var_def: ((SHARED)? 'var') IDENTIFIER '=' (atomic_expr | postfix_expr | expression) ';' ;
+var_def: ((SHARED)? 'var') (POINTER)? IDENTIFIER '=' (atomic_expr | postfix_expr | expression) ';' ;
 
 print_statement: 'print' (atomic_expr | postfix_expr | expression) ';';
 read_expression: 'read';
@@ -71,6 +71,7 @@ TID : 'Tid';
 LOCK: 'lock';
 UNLOCK: 'unlock';
 SHARED: 'shared';
+POINTER: '*';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | ([1-9] [0-9]*);
