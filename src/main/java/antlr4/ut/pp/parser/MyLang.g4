@@ -33,7 +33,7 @@ atomic_expr:  primitive_type
             | '(' expression ')'
             | compound_type
             | fork_expression;
-var_call: IDENTIFIER;
+var_call: '&'? IDENTIFIER;
 
 assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
@@ -54,7 +54,7 @@ join_statement: JOIN (var_call | expression);
 lock_statement: LOCK IDENTIFIER
               | UNLOCK IDENTIFIER;
 
-var_def: ((SHARED)? 'var') (POINTER)? IDENTIFIER '=' (atomic_expr | postfix_expr | expression) ';' ;
+var_def: ((SHARED)? 'var') (POINTER)? IDENTIFIER '='  (atomic_expr | postfix_expr | expression) ';' ;
 
 print_statement: 'print' (atomic_expr | postfix_expr | expression) ';';
 read_expression: 'read';

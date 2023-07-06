@@ -3,6 +3,7 @@ package code_generation;
 public class Symbol {
     public Type type = Type.ERROR;
     public boolean isShared = false;
+    public boolean isPointer = false;
     public int address;
     public int size = 1;
 

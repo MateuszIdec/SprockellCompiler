@@ -5,4 +5,5 @@ public class Attrs {
         public Type type;
         public int size = 1;
         public int address = -1;
+        public boolean isReference = false;
 }
