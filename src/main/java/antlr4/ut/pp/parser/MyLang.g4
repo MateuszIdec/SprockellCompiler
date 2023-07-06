@@ -33,7 +33,7 @@ atomic_expr:  primitive_type
             | '(' expression ')'
             | compound_type
             | fork_expression;
-var_call: '&'? IDENTIFIER;
+var_call: ('&' | '*')? IDENTIFIER;
 
 assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
