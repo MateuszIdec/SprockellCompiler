@@ -354,8 +354,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             int address = currSymbolTable.getAddress(attrs.name);
             attrs.address = currSymbolTable.getAddress(attrs.name);
             attrs.size = currSymbolTable.getSize(attrs.name);
+            attrs.type = currSymbolTable.getType(attrs.name);
 
-            if(attrs.size > 1)
+            if(attrs.size > 1 && !attrs.type.equals(Type.STRING))
                 attrs.type = Type.ARRAY;
 
             if(currSymbolTable.isShared(attrs.name)){
@@ -621,8 +622,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return null;
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();
-        else if(attrs.type.equals(Type.STRING))
+        else if(attrs.type.equals(Type.STRING)) {
             CodeGenerator.MachineCode.Action.printString(attrs.address, attrs.size);
+        }
         else if(attrs.size > 1) {
             attrs.type = Type.ARRAY;
             PrintError printError = new PrintError(ctx, attrs);
