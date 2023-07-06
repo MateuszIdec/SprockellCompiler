@@ -292,10 +292,9 @@ public class CodeGenerator {
                 branchReserveLine();
             }
 
-            public static void ifStatementEnd() {
-                int instructionNumberAfterIfBody = code.size();
-                int label = instructionNumberAfterIfBody - currentInstructionNumber;
-                branchClaimReserved(currentInstructionNumber, "Branch regA (Rel " + label +")");
+            public static void ifStatementEnd(int branchInstructionNumber) {
+                int instructionNumberAfterBody = getCurrentCodeSize();
+                branchClaimReserved( branchInstructionNumber + 2, "Branch regA (Abs " + instructionNumberAfterBody +")");
             }
 
             public static void whileStatementBegin() {
@@ -307,10 +306,10 @@ public class CodeGenerator {
             public static void whileStatementEnd(int startOfWhile, int branchInstructionNumber) {
                 jump(startOfWhile);
 
-                int instructionNrAfterBody = CodeGenerator.getCurrentCodeSize();
+                int instructionNrAfterBody = getCurrentCodeSize();
 
                 String branchInstruction = "Branch regA (Abs " + instructionNrAfterBody + ")";
-                CodeGenerator.MachineCode.Action.branchClaimReserved(branchInstructionNumber + 2, branchInstruction);
+                branchClaimReserved(branchInstructionNumber + 2, branchInstruction);
             }
 
             public static void branchClaimReserved(int branchReservedLineID, String branchInstruction) {

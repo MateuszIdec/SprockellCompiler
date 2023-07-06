@@ -219,13 +219,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
             visit(ctx.getChild(1));
+            int branchInstructionNumber = CodeGenerator.getCurrentCodeSize();
+
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.computeEqual();
 
             CodeGenerator.MachineCode.Action.ifStatementBegin();
             visit(ctx.getChild(2));
 
-            CodeGenerator.MachineCode.Action.ifStatementEnd();
+            CodeGenerator.MachineCode.Action.ifStatementEnd(branchInstructionNumber);
             attrs.type = Type.BOOL;
         }
 
