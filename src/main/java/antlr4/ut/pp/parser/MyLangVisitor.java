@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SpCompiler/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -76,12 +76,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitMulti_expr(MyLangParser.Multi_exprContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#postfix_expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPostfix_expr(MyLangParser.Postfix_exprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#atomic_expr}.
 	 * @param ctx the parse tree
@@ -172,6 +166,18 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRead_expression(MyLangParser.Read_expressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MyLangParser#compound_type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCompound_type(MyLangParser.Compound_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MyLangParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArray(MyLangParser.ArrayContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#primitive_type}.
 	 * @param ctx the parse tree

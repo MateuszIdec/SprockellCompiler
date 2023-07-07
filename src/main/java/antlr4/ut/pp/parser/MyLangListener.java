@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SpCompiler/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -117,16 +117,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMulti_expr(MyLangParser.Multi_exprContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#postfix_expr}.
-	 * @param ctx the parse tree
-	 */
-	void enterPostfix_expr(MyLangParser.Postfix_exprContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#postfix_expr}.
-	 * @param ctx the parse tree
-	 */
-	void exitPostfix_expr(MyLangParser.Postfix_exprContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#atomic_expr}.
 	 * @param ctx the parse tree
@@ -277,6 +267,26 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRead_expression(MyLangParser.Read_expressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MyLangParser#compound_type}.
+	 * @param ctx the parse tree
+	 */
+	void enterCompound_type(MyLangParser.Compound_typeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MyLangParser#compound_type}.
+	 * @param ctx the parse tree
+	 */
+	void exitCompound_type(MyLangParser.Compound_typeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MyLangParser#array}.
+	 * @param ctx the parse tree
+	 */
+	void enterArray(MyLangParser.ArrayContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MyLangParser#array}.
+	 * @param ctx the parse tree
+	 */
+	void exitArray(MyLangParser.ArrayContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#primitive_type}.
 	 * @param ctx the parse tree
