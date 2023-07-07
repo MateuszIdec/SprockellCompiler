@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -348,6 +348,18 @@ public class MyLangBaseListener implements MyLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPrimitive_type(MyLangParser.Primitive_typeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterEmpty_statement(MyLangParser.Empty_statementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitEmpty_statement(MyLangParser.Empty_statementContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

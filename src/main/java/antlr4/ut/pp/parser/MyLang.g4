@@ -10,7 +10,8 @@ statement:  var_def
           | if_statement
           | print_statement
           | lock_statement
-          | join_statement;
+          | join_statement
+          | empty_statement;
 
 body: statement+;
 compound_statement: '{' body '}';
@@ -55,6 +56,7 @@ read_expression: 'read';
 
 primitive_type: INT | BOOL;
 
+empty_statement: ';';
 
 BOOL: 'True' | 'False';
 FORK: 'fork';
