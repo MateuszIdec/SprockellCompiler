@@ -249,6 +249,10 @@ public class CodeGenerator {
                     return "Gt ";
                 case "<":
                     return "Lt ";
+                case ">=":
+                    return "GtE ";
+                case "<=":
+                    return "LtE ";
                 case "||":
                     return "Or ";
                 case "&&":
