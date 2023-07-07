@@ -5,8 +5,8 @@ shared var turn = 0;
 shared var bankAccount = 0;
 
 var thread0 = fork {
-        var i = 100;
-        while i {
+        var counter = 100;
+        while counter {
         lock0 = True;
         turn = 1;
 
@@ -19,15 +19,15 @@ var thread0 = fork {
         // critical section
         bankAccount = bankAccount + 1;
         print bankAccount;
-        // end of critical section
+        // end of the critical section
 
         lock0 = False;
-        i = i - 1;
+        counter = counter - 1;
         }
 };
 var thread1 = fork {
-        var i = 100;
-        while i {
+        var counter = 100;
+        while counter {
         lock1 = True;
         turn = 0;
 
@@ -40,10 +40,10 @@ var thread1 = fork {
         // critical section
         bankAccount = bankAccount - 1;
         print bankAccount;
-        // end of critical section
+        // end of the critical section
 
         lock1 = False;
-        i = i - 1;
+        counter = counter - 1;
         }
 };
 
