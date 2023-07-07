@@ -21,10 +21,6 @@ public class TypeError extends CompilerError{
 
     @Override
     public String getText() {
-        return getErrorHeader() + "Type mismatch: variable \"" + attrs.name + "\" has a type " + attrs.type +", but has been assigned " + expected_type;
-    }
-
-    public String getTextForLock() {
-        return getErrorHeader() + "Type mismatch: variable \"" + attrs.name +"\" has a type " + attrs.type + ", but lock statement doesn't allow this type";
+        return getErrorHeader() + "Type mismatch: variable \"" + name + "\" has a type " + type +", but has been assigned " + expected_type;
     }
 }
