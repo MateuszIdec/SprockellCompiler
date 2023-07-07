@@ -11,6 +11,6 @@ public class LockTypeError extends TypeError{
 
     @Override
     public String getText() {
-        return getErrorHeader() + "Type mismatch: variable \"" + attrs.name +"\" has a type " + attrs.type + ", but lock statement doesn't allow this type";
+        return getErrorHeader() + "Type mismatch: variable \"" + name +"\" has a type " + type + ", but lock statement doesn't allow this type";
     }
 }

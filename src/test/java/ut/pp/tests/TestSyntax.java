@@ -2,8 +2,7 @@ package ut.pp.tests;
 
 import static org.junit.Assert.assertEquals;
 
-import antlr4.ut.pp.parser.MyLangLexer;
-import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import errors.LexerErrorListener;
 import org.antlr.v4.runtime.*;
 import org.junit.Before;
@@ -71,8 +70,13 @@ public class TestSyntax {
         // Expecting no errors, because it should be detected at elaboration phase
         parseString("varx;");
         assertEquals(0, lexerErrors);
-        assertEquals(0, parserErrors);
+        assertEquals(1, parserErrors);
     }
 
-
+    @Test
+    public void printNegativeNumber() {
+        parseString("print -x;");
+        assertEquals(0, lexerErrors);
+        assertEquals(1, parserErrors);
+    }
 }

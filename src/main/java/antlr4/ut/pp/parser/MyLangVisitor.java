@@ -1,4 +1,4 @@
-// Generated from /Users/szlukawski/Dropbox (LUKAW)/Nauka/Erasmus/M8/Compiler_Construction/Project/SprockellCompiler/src/main/java/antlr4/ut/pp/parser/MyLang.g4 by ANTLR 4.12.0
+// Generated from C:/Programming/SprockellCompiler/src/main/java/antlr4/ut/pp/parser\MyLang.g4 by ANTLR 4.12.0
 package antlr4.ut.pp.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -178,4 +178,16 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPrimitive_type(MyLangParser.Primitive_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MyLangParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArray(MyLangParser.ArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MyLangParser#empty_statement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEmpty_statement(MyLangParser.Empty_statementContext ctx);
 }

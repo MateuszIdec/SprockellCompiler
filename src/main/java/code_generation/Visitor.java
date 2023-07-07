@@ -52,7 +52,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     {
         Symbol tidSymbol = new Symbol();
         tidSymbol.address = globalVarAddress;
-        tidSymbol.type = Type.FORK;
+        tidSymbol.type = Type.THREAD_STATUS;
         tidSymbol.isShared = false;
         currSymbolTable.add("TID", tidSymbol );
     }
@@ -71,27 +71,38 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
+        int pointerCase = 0;
 
         if(ctx.getChild(0).getText().equals("shared")) {
             symbol.isShared = true;
             sharedVarCase = 1;
         }
 
-        String name = ctx.getChild(1 + sharedVarCase).getText();
+        if(ctx.getChild(1 + sharedVarCase).getText().equals("*")) {
+            pointerCase = 1;
+            symbol.isPointer = true;
+        }
+
+        String name = ctx.getChild(1 + sharedVarCase + pointerCase).getText();
 
         // Check if variable is already defined in local scope
         if(currSymbolTable.checkLocalScope(name)) {
+            RedefinitonError error = new RedefinitonError(ctx, attrs);
             attrs.type = Type.ERROR;
             attrs.name = name;
-
-            RedefinitonError error = new RedefinitonError(ctx, attrs);
             errorVector.add(error);
             return attrs;
         }
 
-        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
-        CodeGenerator.MachineCode.popRegister("regA");
+        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase + pointerCase));
         int address;
+
+        // Pointer can be assigned only variable
+        if(symbol.isPointer && !RHSattrs.isReference) {
+            errorVector.add(new PointerDefinitionError(ctx, attrs));
+            attrs.type = Type.ERROR;
+            return attrs;
+        }
         // In case of shared variable, we allocate it in global memory
         if(sharedVarCase == 1)
         {
@@ -103,11 +114,22 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 attrs.type = Type.ERROR;
                 return attrs;
             }
+            CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        else{
-            address = memoryManager.createNewVariable(TID, 1);
-            CodeGenerator.MachineCode.storeFromRegA(address);
+        else {
+            int firstMemoryAddress = memoryManager.createNewVariable(TID, 1);
+            address = firstMemoryAddress;
+            int lastMemoryAddress;
+            if(RHSattrs.size == 1)
+                lastMemoryAddress = firstMemoryAddress;
+            else
+                lastMemoryAddress = firstMemoryAddress + RHSattrs.size - 1;
+
+            for(int currentAddress = lastMemoryAddress; currentAddress >= firstMemoryAddress; currentAddress--) {
+                CodeGenerator.MachineCode.popRegister("regA");
+                CodeGenerator.MachineCode.storeFromRegA(currentAddress);
+            }
         }
 
         // Type of name is inferred from the RHS
@@ -169,7 +191,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
-        // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 3) {
             visit(ctx.getChild(1));
@@ -183,9 +204,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             CodeGenerator.MachineCode.Action.ifStatementEnd(branchInstructionNumber);
             attrs.type = Type.BOOL;
-        }
-        else {
-            // TODO error
         }
 
         return attrs;
@@ -279,18 +297,58 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
         Attrs attrs = new Attrs();
-        attrs.name = ctx.getText();
+        attrs.name = ctx.getChild(0).getText();
+        int address;
+        boolean isPointerAddressValue = false;
+
+
+        // 2 children means it's a reference or pointer
+        if(ctx.getChildCount() == 2) {
+            attrs.name = ctx.getChild(1).getText();
+
+            if(ctx.getChild(0).getText().equals("*")) {
+                isPointerAddressValue = true;
+            }
+            else if(ctx.getChild(0).getText().equals("&")) {
+                attrs.isReference = true;
+            }
+        }
 
         if(currSymbolTable.contains(attrs.name)) {
-            int address = currSymbolTable.getAddress(attrs.name);
-            attrs.type = currSymbolTable.getType(attrs.name);
+            Symbol variable = currSymbolTable.getSymbol(attrs.name);
+            address = variable.address;
+            attrs.type = variable.type;
 
-            if(currSymbolTable.isShared(attrs.name)){
+            if(isPointerAddressValue && !variable.isPointer) {
+                errorVector.add(new PointerCallError(ctx, attrs, variable.isPointer));
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+
+            if(isPointerAddressValue) {
+                CodeGenerator.MachineCode.loadDirAddr(String.valueOf(variable.address), "regA");
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
+            }
+            else if(attrs.isReference) {
+                CodeGenerator.MachineCode.loadImmediate(String.valueOf(variable.address), "regA");
+            }
+
+            else if(ctx.getChildCount() == 4) {
+                Attrs indexNumber = visit(ctx.getChild(2));
+
+                if(!indexNumber.type.equals(Type.INT)) {
+                    errorVector.add(new TypeError(ctx, attrs));
+                }
+                CodeGenerator.MachineCode.popRegister("regA");
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
+            }
+
+            else if(currSymbolTable.isShared(attrs.name)){
                 CodeGenerator.MachineCode.readInstrWithDirAddr(address);
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
-                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
+                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address), "regA");
 
             CodeGenerator.MachineCode.pushRegister("regA");
         }
@@ -319,10 +377,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
-
-        // Push to register if the parent is not an array or string
-        if(ctx.parent.getRuleIndex() != 32 && ctx.parent.getRuleIndex() != 11)
-            CodeGenerator.MachineCode.pushRegister("regA");
+        CodeGenerator.MachineCode.pushRegister("regA");
 
         return attrs;
     }
@@ -371,16 +426,17 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             TID = threadCounter;
             threadCounter ++;
 
-            CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress);
+            CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress, TID);
             visit(ctx.compound_statement());
-            CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress);
 
             this.TID = scopeTID;
             this.currSymbolTable = scopeST;
+            CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress, TID);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        attrs.type = Type.FORK;
+        attrs.type = Type.THREAD_STATUS;
         CodeGenerator.MachineCode.Action.forkEnd(newThreadIsRunningAddress);
         return attrs;
     }
@@ -389,9 +445,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
         Attrs fork = visit(ctx.getChild(1));
 
-        if(getType(fork) != Type.FORK)
+        if(getType(fork) != Type.THREAD_STATUS)
         {
-            TypeError error = new TypeError(ctx, fork, Type.FORK);
+            TypeError error = new TypeError(ctx, fork, Type.THREAD_STATUS);
             errorVector.add(error);
         }
         CodeGenerator.MachineCode.Action.join();
@@ -443,7 +499,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     private boolean areCompatible(Attrs attr1, Attrs attrs2)
     {
-        return getType(attr1).equals(getType(attrs2));
+        Type type1 = getType(attr1);
+        Type type2 = getType(attrs2);
+
+        if(type1.equals(Type.THREAD_STATUS))
+            type1 = Type.INT;
+        if(type2.equals(Type.THREAD_STATUS))
+            type2 = Type.INT;
+
+        return type1.equals(type2);
     }
 
     private Attrs manyOperation(ParserRuleContext ctx)
@@ -460,7 +524,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
 
             RHS = visit(ctx.getChild(i));
-            // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
 
             if(RHS.type == Type.ERROR)
                 return RHS;
@@ -472,13 +535,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.popRegister("regB");
             CodeGenerator.MachineCode.popRegister("regA");
-            CodeGenerator.MachineCode.computeOperationCode(operationCode);
+            CodeGenerator.MachineCode.computeOperationCode(operationCode, "regA", "regB", "regC");
             CodeGenerator.MachineCode.pushRegister("regA");
             LHS = RHS;
         }
 
         assert operationCode != null;
-        if(operationCode.equals("Add ") || operationCode.equals("Sub ") | operationCode.equals("Sub "))
+        if(operationCode.equals("Add") || operationCode.equals("Sub") | operationCode.equals("Mul"))
             return LHS;
 
         LHS.type = Type.BOOL;
@@ -491,21 +554,38 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
+        else if(attrs.type.equals(Type.THREAD_STATUS)) {
+            CodeGenerator.MachineCode.Action.printNumber();
+        }
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();
+
         return null;
     }
 
-
     @Override
     public Attrs visitAssignment_statement(MyLangParser.Assignment_statementContext ctx) {
+        int pointerCase = 0;
+        boolean primitiveCase = true;
+
+        if(ctx.getChild(0).getText().equals("*"))
+            pointerCase = 1;
+        if(ctx.getChildCount() == 7)
+            primitiveCase = false;
+
         Attrs attrs = new Attrs();
-        Attrs value = visit(ctx.getChild(2));
-        attrs.name =  ctx.getChild(0).getText();
+        Attrs value;
+
+        if(primitiveCase)
+            value = visit(ctx.getChild(2 + pointerCase));
+        else
+            value = visit(ctx.getChild(5 + pointerCase));
+
+        attrs.name =  ctx.getChild(pointerCase).getText();
 
         if(!currSymbolTable.contains(attrs.name)) {
-            attrs.type = Type.ERROR;
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            attrs.type = Type.ERROR;
             errorVector.add(error);
             return attrs;
         }
@@ -515,12 +595,24 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             TypeError error = new TypeError(ctx, attrs, value);
             errorVector.add(error);
             attrs.type = Type.ERROR;
+            return attrs;
         }
-        else {
-            SymbolTable st = symbolTables.get(TID);
-            Symbol s = st.getSymbol(attrs.name);
-            CodeGenerator.MachineCode.popRegister("regA");
+        SymbolTable st = symbolTables.get(TID);
+        Symbol s = st.getSymbol(attrs.name);
 
+        if(pointerCase == 1 && !s.isPointer)
+            errorVector.add(new PointerCallError(ctx, attrs, false));
+
+        if(pointerCase == 0 && s.isPointer)
+            errorVector.add(new PointerCallError(ctx, attrs, true));
+
+        if(pointerCase == 1 && !value.isReference) {
+            CodeGenerator.MachineCode.popRegister("regA");
+            CodeGenerator.MachineCode.loadDirAddr(String.valueOf(s.address), "regB");
+            CodeGenerator.MachineCode.storeToMemoryLocationInRegister("regA", "regB");
+        }
+        else if(primitiveCase) {
+            CodeGenerator.MachineCode.popRegister("regA");
             if(s.isShared) {
                 CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
             }
@@ -528,6 +620,40 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.storeFromRegA(s.address);
             }
         }
+        else {
+            CodeGenerator.MachineCode.popRegister("regB");
+            visit(ctx.getChild(2 + pointerCase));
+            CodeGenerator.MachineCode.popRegister("regA");
+            CodeGenerator.MachineCode.loadImmediate(String.valueOf(s.address), "regC");
+            CodeGenerator.MachineCode.computeOperationCode("Add", "regA", "regC", "regA");
+            CodeGenerator.MachineCode.storeToMemoryLocationInRegister("regB", "regA");
+        }
+
         return attrs;
         }
+    @Override
+    public Attrs visitArray(MyLangParser.ArrayContext ctx) {
+        Attrs attrs = new Attrs();
+        Attrs childAttrs = visit(ctx.getChild(1));
+        Type type = childAttrs.type;
+
+        for(int x = 3; x < ctx.getChildCount() - 1; x+=2) {
+            if(ctx.getChild(x).getText().equals(","))
+                x++;
+
+            childAttrs = visit(ctx.getChild(x));
+
+            if(type != childAttrs.type) {
+                TypeError typeError = new ArrayTypeError(ctx, childAttrs, type);
+                errorVector.add(typeError);
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+        }
+
+        attrs.type = type;
+        attrs.size = (ctx.getChildCount() - 1) / 2;
+
+        return attrs;
+    }
 }

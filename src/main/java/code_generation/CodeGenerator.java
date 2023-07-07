@@ -1,6 +1,5 @@
 package code_generation;
-import antlr4.ut.pp.parser.MyLangLexer;
-import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import errors.CompilerError;
 import errors.LexerErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -21,15 +20,6 @@ import java.nio.file.Path;
 public class CodeGenerator {
     private static ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private static int threadID = 0;
-    private static int threadCounter = 1;
-    private static int scopeID = 0;
-
-    public static void reset() {
-        threadID = 0;
-        threadCounter = 1;
-        scopeID = 0;
-        code = new ArrayList<>(new ArrayList<>());
-    }
 
     public static int getCurrentCodeSize() {
         return code.get(threadID).size();
@@ -190,22 +180,27 @@ public class CodeGenerator {
         public static void storeFromRegA(int address) {
             code.get(threadID).add("Store regA (DirAddr " + address + ")");
         }
-
+        public static void storeToMemoryLocationInRegister(String valueRegister, String addressRegister) {
+            code.get(threadID).add("Store " + valueRegister + " (IndAddr " + addressRegister + ")");
+        }
         public static void computeEqual() {
             code.get(threadID).add("Compute Equal regA reg0 regA");
         }
 
-        public static void loadDirAddr(String address) {
-            code.get(threadID).add("Load (DirAddr " + address + ") regA");
+        public static void loadDirAddr(String address, String targetRegister) {
+            code.get(threadID).add("Load (DirAddr " + address + ") " + targetRegister);
         }
 
         public static void loadImmediate(String primitiveTypeValue, String register) {
             code.get(threadID).add("Load (ImmValue (" + primitiveTypeValue +")) " + register);
         }
 
+        public static void loadFromAddressInRegister(String registerContainingAddress, String targetRegister) {
+            code.get(threadID).add("Load (IndAddr " + registerContainingAddress +") " + targetRegister);
+        }
 
-        public static void computeOperationCode(String operationCode) {
-            code.get(threadID).add("Compute " + operationCode + "regA regB regA");
+        public static void computeOperationCode(String operationCode, String firstReg, String secondReg, String thirdReg) {
+            code.get(threadID).add("Compute " + operationCode + " " + firstReg + " " + secondReg + " " + thirdReg);
         }
 
         public static void branchWithRel(String register, String relValue) {
@@ -236,27 +231,27 @@ public class CodeGenerator {
         {
             switch (operator) {
                 case "+":
-                    return  "Add ";
+                    return  "Add";
                 case "-":
-                    return "Sub ";
+                    return "Sub";
                 case "*":
-                    return "Mul ";
+                    return "Mul";
                 case "==":
-                    return "Equal ";
+                    return "Equal";
                 case "!=":
-                    return "NEq ";
+                    return "NEq";
                 case ">":
-                    return "Gt ";
+                    return "Gt";
                 case "<":
-                    return "Lt ";
+                    return "Lt";
                 case ">=":
-                    return "GtE ";
+                    return "GtE";
                 case "<=":
-                    return "LtE ";
+                    return "LtE";
                 case "||":
-                    return "Or ";
+                    return "Or";
                 case "&&":
-                    return "And ";
+                    return "And";
             }
             return null;
         }
@@ -321,16 +316,13 @@ public class CodeGenerator {
                 numberOutput();
             }
 
-
             public static void threadID(int address) {
                 loadImmediate(Integer.toString(address), "regA");
                 pushRegister("regA");
             }
 
-            public static void forkInitialization(int newThreadAddress) {
-                scopeID = threadID;
-                threadID = threadCounter;
-                threadCounter++;
+            public static void forkInitialization(int newThreadAddress, int TID) {
+                threadID = TID;
                 code.add(new ArrayList<>());
                 readInstrWithDirAddr(newThreadAddress);
                 receiveRegister("regA");
@@ -338,10 +330,10 @@ public class CodeGenerator {
                 branchWithRel("regA", "-3");
             }
 
-            public static void forkFinish(int newThreadAddress) {
+            public static void forkFinish(int newThreadAddress, int TID) {
                 code.get(threadID).add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadAddress + ")");
                 code.get(threadID).add("EndProg");
-                threadID = scopeID;
+                threadID = TID;
             }
 
             public static void forkEnd(int newThreadAddress) {

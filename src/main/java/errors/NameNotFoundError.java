@@ -10,6 +10,6 @@ public class NameNotFoundError extends CompilerError {
 
     @Override
     public String getText() {
-        return getErrorHeader() + "Name not found: variable \"" + attrs.name + "\" is not in visible scopes";
+        return getErrorHeader() + "Name not found: variable \"" + name + "\" is not in visible scopes";
     }
 }

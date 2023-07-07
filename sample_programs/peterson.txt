@@ -1,39 +1,54 @@
-
-
-
 shared var lock0 = False;
 shared var lock1 = False;
 
 shared var turn = 0;
+shared var bankAccount = 0;
 
 var thread0 = fork {
+        var i = 100;
+        while i {
         lock0 = True;
         turn = 1;
+
         while (lock1 == True && turn == 1)
         {
             // busy wait
             ;
         }
-        // critical section
 
+        // critical section
+        bankAccount = bankAccount + 1;
+        print bankAccount;
         // end of critical section
+
         lock0 = False;
+        i = i - 1;
+        }
 };
 var thread1 = fork {
+        var i = 100;
+        while i {
         lock1 = True;
         turn = 0;
+
         while (lock0 == True && turn == 0)
         {
             // busy wait
             ;
         }
-        // critical section
 
+        // critical section
+        bankAccount = bankAccount - 1;
+        print bankAccount;
         // end of critical section
+
         lock1 = False;
+        i = i - 1;
+        }
 };
 
 join thread1;
 join thread0;
-
-print 999;
+while (thread0 || thread1) {;}
+print bankAccount;
+print bankAccount;

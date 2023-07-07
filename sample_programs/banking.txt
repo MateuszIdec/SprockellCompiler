@@ -63,4 +63,5 @@ join producer1;
 join producer2;
 join consumer1;
 join consumer2;
+while(producer1 || producer2 || consumer1 || consumer2) {;}
 print bank_account;

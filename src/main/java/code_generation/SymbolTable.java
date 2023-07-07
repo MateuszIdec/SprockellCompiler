@@ -16,7 +16,7 @@ public class SymbolTable {
         newST.openScope();
         Symbol tidSymbol = new Symbol();
         tidSymbol.address = TID;
-        tidSymbol.type = Type.FORK;
+        tidSymbol.type = Type.THREAD_STATUS;
         tidSymbol.isShared = false;
         newST.add("TID", tidSymbol);
         return newST;

@@ -10,12 +10,13 @@ statement:  var_def
           | if_statement
           | print_statement
           | lock_statement
-          | join_statement;
+          | join_statement
+          | empty_statement;
 
 body: statement+;
 compound_statement: '{' body '}';
 
-assignment_statement: IDENTIFIER assignment_operator expression ';';
+assignment_statement: (POINTER)? IDENTIFIER  ('[' expression ']')? assignment_operator expression ';';
 
 expression: logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
@@ -29,8 +30,10 @@ atomic_expr:  primitive_type
             | get_thread_id_expression
             | read_expression
             | '(' expression ')'
-            | fork_expression;
-var_call: IDENTIFIER;
+            | fork_expression
+            | array;
+
+var_call: (REFERENCE | POINTER)? IDENTIFIER ('[' expression ']')?;
 
 assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
@@ -48,13 +51,16 @@ join_statement: JOIN expression ';';
 lock_statement: LOCK IDENTIFIER ';'
               | UNLOCK IDENTIFIER ';';
 
-var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
+var_def: ((SHARED)? 'var') (POINTER)? IDENTIFIER '=' expression ';' ;
 
 print_statement: 'print' expression ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;
+array: '[' ((expression) (',' (expression))*)? ']';
 
+
+empty_statement: ';';
 
 BOOL: 'True' | 'False';
 FORK: 'fork';
@@ -63,10 +69,11 @@ TID : 'Tid';
 LOCK: 'lock';
 UNLOCK: 'unlock';
 SHARED: 'shared';
+POINTER: '*';
+REFERENCE: '&';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | '-'? [1-9] [0-9]*;
-STRING: '"' (ESCAPE_SEQUENCE| ~('"'))* '"';
 ESCAPE_SEQUENCE: '\\"';
 
 COMMENT : '//' (~('\n'))* -> skip;
