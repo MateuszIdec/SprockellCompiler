@@ -65,13 +65,13 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpression_statement(MyLangParser.Expression_statementContext ctx) { }
+	@Override public void enterAssignment_statement(MyLangParser.Assignment_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExpression_statement(MyLangParser.Expression_statementContext ctx) { }
+	@Override public void exitAssignment_statement(MyLangParser.Assignment_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -233,18 +233,6 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIteration_statement(MyLangParser.Iteration_statementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitIteration_statement(MyLangParser.Iteration_statementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterWhile_statement(MyLangParser.While_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -264,30 +252,6 @@ public class MyLangBaseListener implements MyLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIf_statement(MyLangParser.If_statementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterElif_part(MyLangParser.Elif_partContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitElif_part(MyLangParser.Elif_partContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterElse_part(MyLangParser.Else_partContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitElse_part(MyLangParser.Else_partContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -353,18 +317,6 @@ public class MyLangBaseListener implements MyLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterReturn_statement(MyLangParser.Return_statementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitReturn_statement(MyLangParser.Return_statementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterPrint_statement(MyLangParser.Print_statementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -396,42 +348,6 @@ public class MyLangBaseListener implements MyLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPrimitive_type(MyLangParser.Primitive_typeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCompound_type(MyLangParser.Compound_typeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCompound_type(MyLangParser.Compound_typeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArray(MyLangParser.ArrayContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArray(MyLangParser.ArrayContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterArgs(MyLangParser.ArgsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitArgs(MyLangParser.ArgsContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

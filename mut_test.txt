@@ -1,0 +1,17 @@
+
+shared var bank = 0;
+shared var l = False;
+
+var producer1 = fork{
+    var i = 100;
+    while i > 0
+    {
+        lock l;
+        print bank;
+        bank = bank + 1;
+        unlock l;
+        i = i - 1;
+    }
+};
+join producer1;
+print 999;
