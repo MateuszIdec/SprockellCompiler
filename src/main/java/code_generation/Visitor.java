@@ -391,12 +391,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             TID = threadCounter;
             threadCounter ++;
 
-            CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress);
+            CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress, TID);
             visit(ctx.compound_statement());
-            CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress);
 
             this.TID = scopeTID;
             this.currSymbolTable = scopeST;
+            CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress, TID);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -519,13 +520,12 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
-        //TODO load value from THREAD_STATUS in register and print it
         else if(attrs.type.equals(Type.THREAD_STATUS)) {
             CodeGenerator.MachineCode.Action.printNumber();
-//            errorVector.add(new PrintError(ctx, attrs));
         }
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();
+
         return null;
     }
 

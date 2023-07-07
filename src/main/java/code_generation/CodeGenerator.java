@@ -331,10 +331,8 @@ public class CodeGenerator {
                 pushRegister("regA");
             }
 
-            public static void forkInitialization(int newThreadAddress) {
-                scopeID = threadID;
-                threadID = threadCounter;
-                threadCounter++;
+            public static void forkInitialization(int newThreadAddress, int TID) {
+                threadID = TID;
                 code.add(new ArrayList<>());
                 readInstrWithDirAddr(newThreadAddress);
                 receiveRegister("regA");
@@ -342,10 +340,10 @@ public class CodeGenerator {
                 branchWithRel("regA", "-3");
             }
 
-            public static void forkFinish(int newThreadAddress) {
+            public static void forkFinish(int newThreadAddress, int TID) {
                 code.get(threadID).add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadAddress + ")");
                 code.get(threadID).add("EndProg");
-                threadID = scopeID;
+                threadID = TID;
             }
 
             public static void forkEnd(int newThreadAddress) {
