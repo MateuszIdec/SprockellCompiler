@@ -57,7 +57,7 @@ print_statement: 'print' expression ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;
-array: '[' ((primitive_type | atomic_expr | expression) (',' (primitive_type | atomic_expr | expression))*)? ']';
+array: '[' ((expression) (',' (expression))*)? ']';
 
 
 empty_statement: ';';
