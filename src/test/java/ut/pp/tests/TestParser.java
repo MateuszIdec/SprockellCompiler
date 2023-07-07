@@ -178,25 +178,36 @@ public class TestParser {
         assertEquals(0, parseStringAndGetErrorCount(input));
 
         String input1 = "print x;";
-        assertEquals(1, parseStringAndGetErrorCount(input1));
+        parseStringAndGetErrorCount(input1);
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
     }
     @Test
     public void testIf() {
         String input = "var x = 0; if y == 5 { y = 2;}";
-        String input1 = "var x = 0; if x == 0 { var x = 2; }";
-        String input2 = "var x = 0; if x == 0 { x = True; }";
 
-        assertEquals(2, parseStringAndGetErrorCount(input));
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+        assertTrue(visitor.getErrorVector().get(1) instanceof NameNotFoundError);
+
+        String input1 = "var x = 0; if x == 0 { var x = 2; }";
         assertEquals(0, parseStringAndGetErrorCount(input1));
-        assertEquals(1, parseStringAndGetErrorCount(input2));
+
+        String input2 = "var x = 0; if x == 0 { x = True; }";
+        parseStringAndGetErrorCount(input2);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
     @Test
     public void testWhile() {
         String input = "var x = 0; while y < 10 { y = y + 1; }";
-        String input1 = "var x = 0; while x < 5 { x = True; }";
-
+        parseStringAndGetErrorCount(input);
         assertEquals(3, parseStringAndGetErrorCount(input));
-        assertEquals(1, parseStringAndGetErrorCount(input1));
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+        assertTrue(visitor.getErrorVector().get(1) instanceof NameNotFoundError);
+        assertTrue(visitor.getErrorVector().get(2) instanceof NameNotFoundError);
+
+        String input1 = "var x = 0; while x < 5 { x = True; }";
+        parseStringAndGetErrorCount(input1);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
 
 //    @Test
