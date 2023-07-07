@@ -1,0 +1,12 @@
+var x = 10;
+var *ptr = &x;
+
+print x;
+print ptr; // the address in memory where the pointer is pointing
+print *ptr; // the value of the pointed variable
+
+*ptr = 70; // edit value of the variable that a pointer is pointing to
+
+print x;
+print ptr;
+print *ptr;;

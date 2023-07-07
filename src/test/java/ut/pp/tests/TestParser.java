@@ -5,13 +5,11 @@ import static org.junit.Assert.assertTrue;
 
 import antlr4.ut.pp.parser.*;
 import code_generation.Visitor;
-import errors.LockTypeError;
+import errors.*;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
 import org.junit.Test;
-import errors.NameNotFoundError;
-import errors.TypeError;
 
 
 public class TestParser {
@@ -397,8 +395,8 @@ public class TestParser {
         String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
         assertEquals(1, parseStringAndGetErrorCount(input2));
 
-//        String input3 = "var x = [1,2,3]; print x;";
-//        assertEquals(1, parseStringAndGetErrorCount(input3));
+        String input3 = "var x = [1,2,3]; print x;";
+        assertEquals(0, parseStringAndGetErrorCount(input3));
     }
 
     @Test
@@ -410,18 +408,19 @@ public class TestParser {
         assertEquals(0, parseStringAndGetErrorCount(input1));
     }
 
-//    @Test
-//    public void testPointer() {
-//        String input = "var *x = 5;";
-//        parseStringAndGetErrorCount(input);
-//        assertTrue(visitor.getErrorVector().get(0) instanceof PointerDefinitionError);
-//
-//        String input1 = "var x = 5; print *x;";
-//        parseStringAndGetErrorCount(input1);
-//        assertTrue(visitor.getErrorVector().get(0) instanceof PointerCallError);
-//
-//        String input2 = "var x = 5; var ptr = &x; ptr = x;";
-//        assertEquals(0, parseStringAndGetErrorCount(input2));
-//
-//    }
+    @Test
+    public void testPointer() {
+        String input = "var *x = 5;";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof PointerDefinitionError);
+
+        String input1 = "var x = 5; print *x;";
+        parseStringAndGetErrorCount(input1);
+        assertTrue(visitor.getErrorVector().get(0) instanceof PointerCallError);
+
+        String input2 = "var x = 5; var *ptr = &x; ptr = x;";
+        parseStringAndGetErrorCount(input2);
+        assertTrue(visitor.getErrorVector().get(0) instanceof  PointerCallError);
+
+    }
 }

@@ -71,13 +71,19 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Attrs attrs = new Attrs();
         Symbol symbol = new Symbol();
         int sharedVarCase = 0;
+        int pointerCase = 0;
 
         if(ctx.getChild(0).getText().equals("shared")) {
             symbol.isShared = true;
             sharedVarCase = 1;
         }
 
-        String name = ctx.getChild(1 + sharedVarCase).getText();
+        if(ctx.getChild(1 + sharedVarCase).getText().equals("*")) {
+            pointerCase = 1;
+            symbol.isPointer = true;
+        }
+
+        String name = ctx.getChild(1 + sharedVarCase + pointerCase).getText();
 
         // Check if variable is already defined in local scope
         if(currSymbolTable.checkLocalScope(name)) {
@@ -88,9 +94,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return attrs;
         }
 
-        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
-
+        Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase + pointerCase));
         int address;
+
+        // Pointer can be assigned only variable
+        if(symbol.isPointer && !RHSattrs.isReference) {
+            errorVector.add(new PointerDefinitionError(ctx, attrs));
+            attrs.type = Type.ERROR;
+            return attrs;
+        }
         // In case of shared variable, we allocate it in global memory
         if(sharedVarCase == 1)
         {
@@ -288,17 +300,44 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
-
         Attrs attrs = new Attrs();
         attrs.name = ctx.getChild(0).getText();
-
         int address;
+        boolean isPointerAddressValue = false;
+
+
+        // 2 children means it's a reference or pointer
+        if(ctx.getChildCount() == 2) {
+            attrs.name = ctx.getChild(1).getText();
+
+            if(ctx.getChild(0).getText().equals("*")) {
+                isPointerAddressValue = true;
+            }
+            else if(ctx.getChild(0).getText().equals("&")) {
+                attrs.isReference = true;
+            }
+        }
+
         if(currSymbolTable.contains(attrs.name)) {
             Symbol variable = currSymbolTable.getSymbol(attrs.name);
             address = variable.address;
             attrs.type = variable.type;
 
-            if(ctx.getChildCount() == 4) {
+            if(isPointerAddressValue && !variable.isPointer) {
+                errorVector.add(new PointerCallError(ctx, attrs, variable.isPointer));
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+
+            if(isPointerAddressValue) {
+                CodeGenerator.MachineCode.loadDirAddr(String.valueOf(variable.address), "regA");
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
+            }
+            else if(attrs.isReference) {
+                CodeGenerator.MachineCode.loadImmediate(String.valueOf(variable.address), "regA");
+            }
+
+            else if(ctx.getChildCount() == 4) {
                 Attrs indexNumber = visit(ctx.getChild(2));
 
                 if(!indexNumber.type.equals(Type.INT)) {
@@ -313,7 +352,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
-                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
+                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address), "regA");
 
             CodeGenerator.MachineCode.pushRegister("regA");
         }
@@ -489,7 +528,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
 
             RHS = visit(ctx.getChild(i));
-            // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
 
             if(RHS.type == Type.ERROR)
                 return RHS;
@@ -531,7 +569,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitAssignment_statement(MyLangParser.Assignment_statementContext ctx) {
+        int pointerCase = 0;
         boolean primitiveCase = true;
+
+        if(ctx.getChild(0).getText().equals("*"))
+            pointerCase = 1;
         if(ctx.getChildCount() == 7)
             primitiveCase = false;
 
@@ -539,11 +581,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         Attrs value;
 
         if(primitiveCase)
-            value = visit(ctx.getChild(2));
+            value = visit(ctx.getChild(2 + pointerCase));
         else
-            value = visit(ctx.getChild(5));
+            value = visit(ctx.getChild(5 + pointerCase));
 
-        attrs.name =  ctx.getChild(0).getText();
+        attrs.name =  ctx.getChild(pointerCase).getText();
 
         if(!currSymbolTable.contains(attrs.name)) {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
@@ -562,7 +604,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         SymbolTable st = symbolTables.get(TID);
         Symbol s = st.getSymbol(attrs.name);
 
-        if(primitiveCase) {
+        if(pointerCase == 1 && !s.isPointer)
+            errorVector.add(new PointerCallError(ctx, attrs, false));
+
+        if(pointerCase == 0 && s.isPointer)
+            errorVector.add(new PointerCallError(ctx, attrs, true));
+
+        if(pointerCase == 1 && !value.isReference) {
+            CodeGenerator.MachineCode.popRegister("regA");
+            CodeGenerator.MachineCode.loadDirAddr(String.valueOf(s.address), "regB");
+            CodeGenerator.MachineCode.storeToMemoryLocationInRegister("regA", "regB");
+        }
+        else if(primitiveCase) {
             CodeGenerator.MachineCode.popRegister("regA");
             if(s.isShared) {
                 CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
@@ -573,7 +626,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
         else {
             CodeGenerator.MachineCode.popRegister("regB");
-            visit(ctx.getChild(2));
+            visit(ctx.getChild(2 + pointerCase));
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.loadImmediate(String.valueOf(s.address), "regC");
             CodeGenerator.MachineCode.computeOperationCode("Add", "regA", "regC", "regA");
