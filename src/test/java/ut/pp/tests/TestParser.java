@@ -3,8 +3,7 @@ package ut.pp.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import antlr4.ut.pp.parser.MyLangLexer;
-import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import code_generation.Visitor;
 import errors.LockTypeError;
 import org.antlr.v4.runtime.*;
@@ -387,29 +386,29 @@ public class TestParser {
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
 
-//    @Test
-//    public void testArray() {
-//        String input = "var x = [1,True,3];";
-//        assertEquals(1, parseStringAndGetErrorCount(input));
-//
-//        String input1 = "var x = [1,2,3]; var y = x[2];";
-//        assertEquals(0, parseStringAndGetErrorCount(input1));
-//
-//        String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
-//        assertEquals(1, parseStringAndGetErrorCount(input2));
-//
+    @Test
+    public void testArray() {
+        String input = "var x = [1,True,3];";
+        assertEquals(1, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = [1,2,3]; var y = x[2];";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+
+        String input2 = "var x = [1,2,3]; var y = True; y = x[2];";
+        assertEquals(1, parseStringAndGetErrorCount(input2));
+
 //        String input3 = "var x = [1,2,3]; print x;";
 //        assertEquals(1, parseStringAndGetErrorCount(input3));
-//    }
+    }
 
-//    @Test
-//    public void testString() {
-//        String input = "var x = \"a\";";
-//        assertEquals(0, parseStringAndGetErrorCount(input));
-//
-//        String input1 = "var x = \"1ab2\"; print x;";
-//        assertEquals(0, parseStringAndGetErrorCount(input1));
-//    }
+    @Test
+    public void testString() {
+        String input = "var x = \"a\";";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = \"1ab2\"; print x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
 
 //    @Test
 //    public void testPointer() {

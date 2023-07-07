@@ -30,8 +30,10 @@ atomic_expr:  primitive_type
             | get_thread_id_expression
             | read_expression
             | '(' expression ')'
-            | fork_expression;
-var_call: IDENTIFIER;
+            | fork_expression
+            | array;
+
+var_call: IDENTIFIER ('[' expression ']')?;
 
 assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
@@ -55,6 +57,8 @@ print_statement: 'print' expression ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;
+array: '[' ((primitive_type | atomic_expr | expression) (',' (primitive_type | atomic_expr | expression))*)? ']';
+
 
 empty_statement: ';';
 

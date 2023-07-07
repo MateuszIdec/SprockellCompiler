@@ -89,7 +89,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
-        CodeGenerator.MachineCode.popRegister("regA");
+
         int address;
         // In case of shared variable, we allocate it in global memory
         if(sharedVarCase == 1)
@@ -102,11 +102,22 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 attrs.type = Type.ERROR;
                 return attrs;
             }
+            CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        else{
-            address = memoryManager.createNewVariable(TID, 1);
-            CodeGenerator.MachineCode.storeFromRegA(address);
+        else {
+            int firstMemoryAddress = memoryManager.createNewVariable(TID, 1);
+            address = firstMemoryAddress;
+            int lastMemoryAddress;
+            if(RHSattrs.size == 1)
+                lastMemoryAddress = firstMemoryAddress;
+            else
+                lastMemoryAddress = firstMemoryAddress + RHSattrs.size - 1;
+
+            for(int currentAddress = lastMemoryAddress; currentAddress >= firstMemoryAddress; currentAddress--) {
+                CodeGenerator.MachineCode.popRegister("regA");
+                CodeGenerator.MachineCode.storeFromRegA(currentAddress);
+            }
         }
 
         // Type of name is inferred from the RHS
@@ -277,20 +288,28 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitVar_call(MyLangParser.Var_callContext ctx) {
+
         Attrs attrs = new Attrs();
-        attrs.name = ctx.getText();
+        attrs.name = ctx.getChild(0).getText();
 
+        int address;
         if(currSymbolTable.contains(attrs.name)) {
-            int address = currSymbolTable.getAddress(attrs.name);
-            attrs.type = currSymbolTable.getType(attrs.name);
+            Symbol variable = currSymbolTable.getSymbol(attrs.name);
+            address = variable.address;
+            attrs.type = variable.type;
 
-            if(currSymbolTable.isShared(attrs.name)){
-                CodeGenerator.MachineCode.readInstrWithDirAddr(address);
-                CodeGenerator.MachineCode.receiveRegister("regA");
+            if(ctx.getChildCount() == 4) {
+                Attrs indexNumber = visit(ctx.getChild(2));
+
+                if(!indexNumber.type.equals(Type.INT)) {
+                    errorVector.add(new TypeError(ctx, attrs));
+                }
+                CodeGenerator.MachineCode.popRegister("regA");
+                CodeGenerator.MachineCode.loadFromAddressInRegister("regA", "regA");
             }
-            else if(currSymbolTable.getType(attrs.name).equals(Type.THREAD_STATUS)) {
-                CodeGenerator.MachineCode.loadDirAddr(String.valueOf(address));
-                CodeGenerator.MachineCode.readInstrWithInd("regA");
+
+            else if(currSymbolTable.isShared(attrs.name)){
+                CodeGenerator.MachineCode.readInstrWithDirAddr(address);
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
@@ -546,4 +565,29 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
         return attrs;
         }
+    @Override
+    public Attrs visitArray(MyLangParser.ArrayContext ctx) {
+        Attrs attrs = new Attrs();
+        Attrs childAttrs = visit(ctx.getChild(1));
+        Type type = childAttrs.type;
+
+        for(int x = 3; x < ctx.getChildCount() - 1; x+=2) {
+            if(ctx.getChild(x).getText().equals(","))
+                x++;
+
+            childAttrs = visit(ctx.getChild(x));
+
+            if(type != childAttrs.type) {
+                TypeError typeError = new ArrayTypeError(ctx, childAttrs, type);
+                errorVector.add(typeError);
+                attrs.type = Type.ERROR;
+                return attrs;
+            }
+        }
+
+        attrs.type = type;
+        attrs.size = (ctx.getChildCount() - 1) / 2;
+
+        return attrs;
+    }
 }
