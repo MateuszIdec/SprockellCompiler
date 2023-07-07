@@ -191,7 +191,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
-        // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
         if(ctx.getChildCount() == 3) {
             visit(ctx.getChild(1));
@@ -205,9 +204,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             CodeGenerator.MachineCode.Action.ifStatementEnd(branchInstructionNumber);
             attrs.type = Type.BOOL;
-        }
-        else {
-            // TODO error
         }
 
         return attrs;
@@ -577,7 +573,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(ctx.getChildCount() == 7)
             primitiveCase = false;
 
-        Attrs attrs = new Attrs();;
+        Attrs attrs = new Attrs();
         Attrs value;
 
         if(primitiveCase)
