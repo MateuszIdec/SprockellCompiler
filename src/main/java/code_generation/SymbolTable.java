@@ -19,14 +19,6 @@ public class SymbolTable {
         tidSymbol.type = Type.FORK;
         tidSymbol.isShared = false;
         newST.add("TID", tidSymbol);
-        for (Map<String, Symbol> scopeMap : st.symbolStack) {
-            for (Map.Entry<String, Symbol> entry : scopeMap.entrySet()) {
-                String key = entry.getKey();
-                Symbol value = entry.getValue().deepCopy();
-                if(value.isShared)
-                    newST.add(key, value.deepCopy());
-            }
-        }
         return newST;
     }
 
