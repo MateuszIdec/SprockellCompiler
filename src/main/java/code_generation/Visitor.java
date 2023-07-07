@@ -447,7 +447,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     private boolean areCompatible(Attrs attr1, Attrs attrs2)
     {
-        return getType(attr1).equals(getType(attrs2));
+        Type type1 = getType(attr1);
+        Type type2 = getType(attrs2);
+
+        if(type1.equals(Type.THREAD_STATUS))
+            type1 = Type.INT;
+        if(type2.equals(Type.THREAD_STATUS))
+            type2 = Type.INT;
+
+        return type1.equals(type2);
     }
 
     private Attrs manyOperation(ParserRuleContext ctx)
@@ -495,7 +503,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
-        //TODO load value from memory in register and print it
+        //TODO load value from THREAD_STATUS in register and print it
         else if(attrs.type.equals(Type.THREAD_STATUS)) {
             CodeGenerator.MachineCode.Action.printNumber();
 //            errorVector.add(new PrintError(ctx, attrs));
