@@ -288,6 +288,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.readInstrWithDirAddr(address);
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
+            else if(currSymbolTable.getType(attrs.name).equals(Type.THREAD_STATUS)) {
+                CodeGenerator.MachineCode.loadDirAddr(String.valueOf(address));
+                CodeGenerator.MachineCode.readInstrWithInd("regA");
+                CodeGenerator.MachineCode.receiveRegister("regA");
+            }
             else
                 CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
 
@@ -490,8 +495,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
+        //TODO load value from memory in register and print it
         else if(attrs.type.equals(Type.THREAD_STATUS)) {
-            errorVector.add(new PrintError(ctx, attrs));
+            CodeGenerator.MachineCode.Action.printNumber();
+//            errorVector.add(new PrintError(ctx, attrs));
         }
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();

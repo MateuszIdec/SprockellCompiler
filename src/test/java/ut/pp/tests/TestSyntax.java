@@ -74,5 +74,10 @@ public class TestSyntax {
         assertEquals(1, parserErrors);
     }
 
-
+    @Test
+    public void printNegativeNumber() {
+        parseString("print -x;");
+        assertEquals(0, lexerErrors);
+        assertEquals(1, parserErrors);
+    }
 }

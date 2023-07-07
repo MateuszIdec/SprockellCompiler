@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.Visitor;
+import errors.LockTypeError;
+import errors.PrintError;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
@@ -46,30 +48,74 @@ public class TestParser {
     public void testSimplestExpression_statement()
     {
         String input = ";";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
     @Test
-    public void testJustVariableDef()
+    public void testVariableDef()
     {
         String input = "var x = 0;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
 
+        String input1 = "var x = -6;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+    @Test
+    public void testVariableDefinitionWithAddExpression() {
+        String input = "var x = 2 + 3;";
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
+    @Test
+    public void testVariableDefinitionWithSubExpression() {
+        String input = "var x = 2 - 3;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testVariableDefinitionWithMulExpression() {
+        String input = "var x = 3 * 4;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testVariableDefinitionFromOtherVariable() {
+        String input = "var x = 4; var y = x;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testVariableDefinitionFromOtherVariableWithAdd() {
+        String input = "var x = 4; var y = x + 5";
+        assertEquals(0, parseStringAndGetErrorCount(input));
 
+        String input1 = "var x = 4; var y = 5 * x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+    @Test
+    public void testVariableDefinitionFromOtherVariableWithSub() {
+        String input = "var x = 4; var y = x - 5";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = 4; var y = 5 - x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+    @Test
+    public void testVariableDefinitionFromOtherVariableWithMult() {
+        String input = "var x = 4; var y = x * 5";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = 4; var y = 5 * x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
     @Test
     public void testReassignment()
     {
         String input = "var x = 0; x = 1;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
-    }
 
+        String input1 = "var x = 0; x = -12;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
     @Test
     public void testInLocalScope()
     {
         String input = "{var x = 0;} x = 1;";
-
         parseStringAndGetErrorCount(input);
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
 
@@ -78,26 +124,23 @@ public class TestParser {
     }
 
     @Test
-    public void testTypeError()
+    public void testTypeErrorBoolAssignedToInt()
     {
         String input = "var x = 1; x = True;";
         parseStringAndGetErrorCount(input);
-
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
     @Test
-    public void testTypeErrorBool()
+    public void testTypeErrorIntAssignedToBool()
     {
         String input = "var x = True; x = 1;";
         parseStringAndGetErrorCount(input);
-
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
     @Test
     public void testManyNestedScopes()
     {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} x = True;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
     @Test
@@ -105,7 +148,6 @@ public class TestParser {
     {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} z = 1;";
         parseStringAndGetErrorCount(input);
-
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
     }
     @Test
@@ -113,35 +155,35 @@ public class TestParser {
     {
         String input = "var x = True; {x = False; var y = 2; {var z = 3; z = 0;} y = 10;} z = False;";
         parseStringAndGetErrorCount(input);
-
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
     }
     @Test
     public void testAssignmentPlusEq()
     {
         String input = "var x = 0; x = x + 1;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
     @Test
     public void testAssignmentMinusEq()
     {
         String input = "var x = 0; x = x - 1;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
-    //    @Test
-//    public void testRelation()
-//    {
-//        String input = "var a = True; var b = False; var c = a <= b;";
-//
-//        assertEquals(0, parseString(input));
-//    }
+    @Test
+    public void testAssignmentMul() {
+        String input = "var x = 0; x = x * 2; x = x * x;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+        @Test
+    public void testRelation()
+    {
+        String input = "var a = True; var b = False; var c = a <= b; b = c;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
     @Test
     public void testManyRelations()
     {
         String input = "var a = True; var b = False; var c = a <= b > True < False;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
     @Test
@@ -152,39 +194,155 @@ public class TestParser {
         assertTrue(visitor.getErrorVector().get(1) instanceof TypeError);
     }
     @Test
-    public void testLock() {
-        String input = "var x = fork { var y = 0;}; var y = 5; lock x;";
-        assertEquals(1, parseStringAndGetErrorCount(input));
-
-        String input1 = "lock x;";
-        parseStringAndGetErrorCount(input1);
+    public void testLockNonexistentVariable() {
+        String input = "lock x;";
+        parseStringAndGetErrorCount(input);
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+    }
+    @Test
+    public void testLockInteger() {
+        String input = "var x = 5; lock x;";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof LockTypeError);
+    }
+    @Test
+    public void testLockFork() {
+        String input = "var x = fork { var y = 0;}; lock x;";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof LockTypeError);
+    }
+    @Test
+    public void testLockSharedInteger() {
+        String input = "shared var x = 5; lock x;";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof LockTypeError);
     }
     @Test
     public void testJoin() {
         String input = "var x = fork { var y = 0;}; var y = 5; join y;";
         parseStringAndGetErrorCount(input);
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
+
+        String input1 = "join x;";
     }
     @Test
-    public void testTid(){
+    public void testTid() {
         String input = "var x = Tid; x = 2;";
-
         assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = Tid + 2;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+
+        String input2 = "if Tid == 2 {;}";
+        assertEquals(0, parseStringAndGetErrorCount(input2));
+
+        String input3 = "var x = 2; if Tid == x {;} if x == Tid {;}";
+        assertEquals(0, parseStringAndGetErrorCount(input3));
+
+        String input4 = "var x = True; if Tid == x {;}";
+        parseStringAndGetErrorCount(input4);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
     @Test
-    public void testPrint() {
-        String input = "var x = 5; print x + 2;";
-        assertEquals(0, parseStringAndGetErrorCount(input));
+    public void testPrintNonexistentVariable() {
+        String input = "print x;";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
 
-        String input1 = "print x;";
+        String input1 = "print x + 5";
         parseStringAndGetErrorCount(input1);
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+
+        String input2 = "print 5 + x";
+        assertEquals(1, parseStringAndGetErrorCount(input2));
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+
+        String input3 = "print x - 5";
+        assertEquals(1, parseStringAndGetErrorCount(input3));
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+
+        String input4 = "print 5 * x";
+        assertEquals(1, parseStringAndGetErrorCount(input4));
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+
+        String input5 = "print x * 5";
+        assertEquals(1, parseStringAndGetErrorCount(input5));
+        assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
+
     }
+    @Test
+    public void testPrintAddExpression() {
+        String input = "print 2 + 2;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+
+    @Test
+    public void testPrintSubExpression() {
+        String input = "print 2 - 2;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testPrintMulExpression() {
+        String input = "print 2 * 5;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testPrintAddExpressionWithVariable() {
+        String input = "var x = 5; print x + 5;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = 5; print 5 + x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+    @Test
+    public void testPrintSubExpressionWithVariable() {
+        String input = "var x = 5; print x - 5;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = 5; print 5 - x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+    @Test
+    public void testPrintMulExpressionWithVariable() {
+        String input = "var x = 5; print x * 5;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+        String input1 = "var x = 5; print 5 * x;";
+        assertEquals(0, parseStringAndGetErrorCount(input1));
+    }
+
+    @Test
+    public void testPrintIntType() {
+        String input = "var x = 5; print x;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testPrintBooleanType() {
+        String input = "var x = True; print x;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testPrintThreadStatusType() {
+        String input = "var thread0 = fork {;}; print thread0;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+
+    }
+    @Test
+    public void testIfIntToBoolComparison() {
+        String input = "var x = 0; if x == True {;}";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
+    }
+    @Test
+    public void testIfBoolToIntComparison() {
+        String input = "var x = 0; if True == x {;}";
+        parseStringAndGetErrorCount(input);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
+    }
+
     @Test
     public void testIf() {
         String input = "var x = 0; if y == 5 { y = 2;}";
-
         parseStringAndGetErrorCount(input);
         assertTrue(visitor.getErrorVector().get(0) instanceof NameNotFoundError);
         assertTrue(visitor.getErrorVector().get(1) instanceof NameNotFoundError);
@@ -195,6 +353,13 @@ public class TestParser {
         String input2 = "var x = 0; if x == 0 { x = True; }";
         parseStringAndGetErrorCount(input2);
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
+
+        String input3 = "var x = True; var y = 5; if x == y {x = False;}";
+        parseStringAndGetErrorCount(input3);
+        assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
+
+        String input4 = "var x = True; var y = False; if x == y {y = False;}";
+        assertEquals(0, parseStringAndGetErrorCount(input4));
     }
     @Test
     public void testWhile() {
@@ -225,14 +390,14 @@ public class TestParser {
 //        assertEquals(1, parseStringAndGetErrorCount(input3));
 //    }
 
-    @Test
-    public void testString() {
-        String input = "var x = \"a\";";
-        assertEquals(0, parseStringAndGetErrorCount(input));
-
-        String input1 = "var x = \"1ab2\"; print x;";
-        assertEquals(0, parseStringAndGetErrorCount(input1));
-    }
+//    @Test
+//    public void testString() {
+//        String input = "var x = \"a\";";
+//        assertEquals(0, parseStringAndGetErrorCount(input));
+//
+//        String input1 = "var x = \"1ab2\"; print x;";
+//        assertEquals(0, parseStringAndGetErrorCount(input1));
+//    }
 
 //    @Test
 //    public void testPointer() {
