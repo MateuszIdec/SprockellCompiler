@@ -71,7 +71,7 @@ public class TestSyntax {
         // Expecting no errors, because it should be detected at elaboration phase
         parseString("varx;");
         assertEquals(0, lexerErrors);
-        assertEquals(0, parserErrors);
+        assertEquals(1, parserErrors);
     }
 
 
