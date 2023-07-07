@@ -21,8 +21,7 @@ public class MyLangParser extends Parser {
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		BOOL=25, FORK=26, JOIN=27, TID=28, LOCK=29, UNLOCK=30, SHARED=31, POINTER=32, 
-		REFERENCE=33, IDENTIFIER=34, INT=35, STRING=36, ESCAPE_SEQUENCE=37, COMMENT=38, 
-		WS=39;
+		REFERENCE=33, IDENTIFIER=34, INT=35, ESCAPE_SEQUENCE=36, COMMENT=37, WS=38;
 	public static final int
 		RULE_module = 0, RULE_statement = 1, RULE_body = 2, RULE_compound_statement = 3, 
 		RULE_assignment_statement = 4, RULE_expression = 5, RULE_logical_or_expression = 6, 
@@ -53,7 +52,7 @@ public class MyLangParser extends Parser {
 			"'='", "'=='", "'!='", "'>='", "'<='", "'>'", "'<'", "'+'", "'-'", "'while'", 
 			"'if'", "'var'", "'print'", "'read'", "','", null, "'fork'", "'join'", 
 			"'Tid'", "'lock'", "'unlock'", "'shared'", "'*'", "'&'", null, null, 
-			null, "'\\\"'"
+			"'\\\"'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
@@ -62,8 +61,7 @@ public class MyLangParser extends Parser {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, "BOOL", "FORK", "JOIN", "TID", "LOCK", "UNLOCK", "SHARED", "POINTER", 
-			"REFERENCE", "IDENTIFIER", "INT", "STRING", "ESCAPE_SEQUENCE", "COMMENT", 
-			"WS"
+			"REFERENCE", "IDENTIFIER", "INT", "ESCAPE_SEQUENCE", "COMMENT", "WS"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -2021,7 +2019,7 @@ public class MyLangParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001\'\u00f3\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001&\u00f3\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
 		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
 		"\b\u0007\b\u0002\t\u0007\t\u0002\n\u0007\n\u0002\u000b\u0007\u000b\u0002"+

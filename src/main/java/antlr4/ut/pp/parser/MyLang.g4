@@ -74,7 +74,6 @@ REFERENCE: '&';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | '-'? [1-9] [0-9]*;
-STRING: '"' (ESCAPE_SEQUENCE| ~('"'))* '"';
 ESCAPE_SEQUENCE: '\\"';
 
 COMMENT : '//' (~('\n'))* -> skip;

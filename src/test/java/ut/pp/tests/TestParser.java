@@ -400,15 +400,6 @@ public class TestParser {
     }
 
     @Test
-    public void testString() {
-        String input = "var x = \"a\";";
-        assertEquals(0, parseStringAndGetErrorCount(input));
-
-        String input1 = "var x = \"1ab2\"; print x;";
-        assertEquals(0, parseStringAndGetErrorCount(input1));
-    }
-
-    @Test
     public void testPointer() {
         String input = "var *x = 5;";
         parseStringAndGetErrorCount(input);
