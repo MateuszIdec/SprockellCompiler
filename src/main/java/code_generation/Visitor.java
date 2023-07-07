@@ -513,7 +513,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return null;
     }
 
-
     @Override
     public Attrs visitAssignment_statement(MyLangParser.Assignment_statementContext ctx) {
         Attrs attrs = new Attrs();

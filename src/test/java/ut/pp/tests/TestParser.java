@@ -349,7 +349,7 @@ public class TestParser {
 
     @Test
     public void testIfStatementWithThreadStatusVariable() {
-        String input = "var y = 0; var x = fork {var y = 2;}; join x; if x == 1 {y = 1;}; if 1 == x {y =1;};";
+        String input = "var y = 0; var x = fork {var y = 2;}; join x; if x == 1 {y = 1;} if 1 == x {y = 1;}";
         assertEquals(0, parseStringAndGetErrorCount(input));
     }
     @Test
