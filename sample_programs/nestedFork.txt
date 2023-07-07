@@ -1,0 +1,10 @@
+var x = fork {
+    print 1;
+    var y = fork {
+    print 2;
+    };
+    join y;
+};
+
+join x;
+print 0;
