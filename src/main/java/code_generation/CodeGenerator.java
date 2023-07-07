@@ -20,15 +20,6 @@ import java.nio.file.Path;
 public class CodeGenerator {
     private static ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private static int threadID = 0;
-    private static int threadCounter = 1;
-    private static int scopeID = 0;
-
-    public static void reset() {
-        threadID = 0;
-        threadCounter = 1;
-        scopeID = 0;
-        code = new ArrayList<>(new ArrayList<>());
-    }
 
     public static int getCurrentCodeSize() {
         return code.get(threadID).size();
@@ -196,8 +187,8 @@ public class CodeGenerator {
             code.get(threadID).add("Compute Equal regA reg0 regA");
         }
 
-        public static void loadDirAddr(String address) {
-            code.get(threadID).add("Load (DirAddr " + address + ") regA");
+        public static void loadDirAddr(String address, String targetRegister) {
+            code.get(threadID).add("Load (DirAddr " + address + ") " + targetRegister);
         }
 
         public static void loadImmediate(String primitiveTypeValue, String register) {
@@ -324,7 +315,6 @@ public class CodeGenerator {
                 popRegister("regA");
                 numberOutput();
             }
-
 
             public static void threadID(int address) {
                 loadImmediate(Integer.toString(address), "regA");
