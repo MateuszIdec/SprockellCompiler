@@ -1,0 +1,9 @@
+var array = [0,0,0,0,0];
+var i = 0;
+while i < 5
+{
+    array[i] = input;
+    print array[i];
+    i = i + 1;
+}
+print 999;
