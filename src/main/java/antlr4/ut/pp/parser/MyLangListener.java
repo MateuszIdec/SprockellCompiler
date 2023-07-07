@@ -48,15 +48,15 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitCompound_statement(MyLangParser.Compound_statementContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#expression_statement}.
+	 * Enter a parse tree produced by {@link MyLangParser#assignment_statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterExpression_statement(MyLangParser.Expression_statementContext ctx);
+	void enterAssignment_statement(MyLangParser.Assignment_statementContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MyLangParser#expression_statement}.
+	 * Exit a parse tree produced by {@link MyLangParser#assignment_statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitExpression_statement(MyLangParser.Expression_statementContext ctx);
+	void exitAssignment_statement(MyLangParser.Assignment_statementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#expression}.
 	 * @param ctx the parse tree
@@ -188,16 +188,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitMulti_operator(MyLangParser.Multi_operatorContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#iteration_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterIteration_statement(MyLangParser.Iteration_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#iteration_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitIteration_statement(MyLangParser.Iteration_statementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MyLangParser#while_statement}.
 	 * @param ctx the parse tree
 	 */
@@ -217,26 +207,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIf_statement(MyLangParser.If_statementContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#elif_part}.
-	 * @param ctx the parse tree
-	 */
-	void enterElif_part(MyLangParser.Elif_partContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#elif_part}.
-	 * @param ctx the parse tree
-	 */
-	void exitElif_part(MyLangParser.Elif_partContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#else_part}.
-	 * @param ctx the parse tree
-	 */
-	void enterElse_part(MyLangParser.Else_partContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#else_part}.
-	 * @param ctx the parse tree
-	 */
-	void exitElse_part(MyLangParser.Else_partContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MyLangParser#fork_expression}.
 	 * @param ctx the parse tree
@@ -288,16 +258,6 @@ public interface MyLangListener extends ParseTreeListener {
 	 */
 	void exitVar_def(MyLangParser.Var_defContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void enterReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 */
-	void exitReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MyLangParser#print_statement}.
 	 * @param ctx the parse tree
 	 */
@@ -327,34 +287,4 @@ public interface MyLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPrimitive_type(MyLangParser.Primitive_typeContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#compound_type}.
-	 * @param ctx the parse tree
-	 */
-	void enterCompound_type(MyLangParser.Compound_typeContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#compound_type}.
-	 * @param ctx the parse tree
-	 */
-	void exitCompound_type(MyLangParser.Compound_typeContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#array}.
-	 * @param ctx the parse tree
-	 */
-	void enterArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#array}.
-	 * @param ctx the parse tree
-	 */
-	void exitArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link MyLangParser#args}.
-	 * @param ctx the parse tree
-	 */
-	void enterArgs(MyLangParser.ArgsContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MyLangParser#args}.
-	 * @param ctx the parse tree
-	 */
-	void exitArgs(MyLangParser.ArgsContext ctx);
 }

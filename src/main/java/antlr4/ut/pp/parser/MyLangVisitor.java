@@ -35,11 +35,11 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCompound_statement(MyLangParser.Compound_statementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#expression_statement}.
+	 * Visit a parse tree produced by {@link MyLangParser#assignment_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpression_statement(MyLangParser.Expression_statementContext ctx);
+	T visitAssignment_statement(MyLangParser.Assignment_statementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#expression}.
 	 * @param ctx the parse tree
@@ -119,12 +119,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMulti_operator(MyLangParser.Multi_operatorContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#iteration_statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIteration_statement(MyLangParser.Iteration_statementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MyLangParser#while_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -136,18 +130,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIf_statement(MyLangParser.If_statementContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#elif_part}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitElif_part(MyLangParser.Elif_partContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#else_part}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitElse_part(MyLangParser.Else_partContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MyLangParser#fork_expression}.
 	 * @param ctx the parse tree
@@ -179,12 +161,6 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVar_def(MyLangParser.Var_defContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MyLangParser#return_statement}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitReturn_statement(MyLangParser.Return_statementContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MyLangParser#print_statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -202,22 +178,4 @@ public interface MyLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPrimitive_type(MyLangParser.Primitive_typeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#compound_type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCompound_type(MyLangParser.Compound_typeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#array}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArray(MyLangParser.ArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MyLangParser#args}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArgs(MyLangParser.ArgsContext ctx);
 }

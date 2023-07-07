@@ -1,33 +1,66 @@
- // var x = 0*1*2+3*4*5+6*7*8 < 9*10*11+12*13*14+15*16*17 < 18*19*20+21*22*23+24*25*26 || 27*28*29+30*31*32+33*34*35 < 36*37*38+39*40*41+42*43*44 < 45*46*46+47*49*50+51*52*53 || 54*55*56+57*58*59+60*61*62 < 63*64*65+66*67*68+69*70*71 < 72*73*74+75*76*77+78*79*80;
- // print x;
 
-shared var x = False;
-shared var bank = 0;
-var t1 = fork {
-    var i = 15;
-    while i > 0
-    {
-        print 1;
-        i = i - 1;
-        lock x;
-        bank = bank + i;
-        unlock x;
-    }
-    print 999;
-};
 
-var t2 = fork {
-    var i = 15 ;
-    while i > 0
+    shared var bank_account = 0;
+    shared var x = False;
+
+    var producer1 = fork
     {
-        print 2;
-        i = i - 1;
-        lock x;
-        bank = bank + i;
-        unlock x;
-    }
-    print 1000;
-};
-join t1;
-join t2;
-print bank;
+        var i = 100;
+        while i > 0
+        {
+            lock x;
+            bank_account = bank_account + 1;
+            print bank_account;
+            unlock x;
+            i = i - 1;
+        }
+        print 111;
+    };
+
+    var producer2 = fork
+    {
+        var i = 100;
+        while i > 0
+        {
+            lock x;
+            bank_account = bank_account + 2;
+            print bank_account;
+            unlock x;
+            i = i - 1;
+        }
+        print 222;
+    };
+
+    var consumer1 = fork
+    {
+        var i = 100;
+        while i > 0
+        {
+            lock x;
+            bank_account = bank_account - 1;
+            print bank_account;
+            unlock x;
+            i = i - 1;
+        }
+        print 0-111;
+    };
+
+    var consumer2 = fork
+    {
+        var i = 100;
+        while i > 0
+        {
+            lock x;
+            bank_account = bank_account - 2;
+            print bank_account;
+            unlock x;
+            i = i - 1;
+        }
+        print 0-222;
+    };
+
+    join producer1;
+    join producer2;
+    join consumer1;
+    join consumer2;
+    print bank_account;

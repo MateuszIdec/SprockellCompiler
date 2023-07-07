@@ -1,24 +1,20 @@
 package code_generation;
 
-import antlr4.ut.pp.parser.MyLangBaseVisitor;
-import antlr4.ut.pp.parser.MyLangParser;
+import antlr4.ut.pp.parser.*;
 import errors.*;
 import errors.OutOfMemoryError;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.Vector;
 
 public class Visitor extends MyLangBaseVisitor<Attrs> {
     private final Vector<CompilerError> errorVector = new Vector<>();
     private final ArrayList<SymbolTable> symbolTables = new ArrayList<>();
-    private final ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private final MemoryManager memoryManager = new MemoryManager();
     private int TID;
     private int threadCounter;
     private SymbolTable currSymbolTable  = null;
-
 
     public Vector<CompilerError> getErrorVector() {
         return new Vector<>(errorVector);
@@ -39,8 +35,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             symbolTables.add(new SymbolTable());
             currSymbolTable = symbolTables.get(this.TID);
-
-            code.add(new ArrayList<>());
 
             int globalVarAddress = memoryManager.allocateGlobalVariable();
             addTIDSymbolToSymbolTable(globalVarAddress);
@@ -92,16 +86,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
             RedefinitonError error = new RedefinitonError(ctx, attrs);
             errorVector.add(error);
-            System.err.println(error.getText());
             return attrs;
         }
+
         Attrs RHSattrs = visit(ctx.getChild(3 + sharedVarCase));
+        CodeGenerator.MachineCode.popRegister("regA");
         int address;
+        // In case of shared variable, we allocate it in global memory
         if(sharedVarCase == 1)
         {
             try {
                 address = memoryManager.allocateGlobalVariable();
-            }catch (Exception e)
+            } catch (Exception e)
             {
                 errorVector.add(new OutOfMemoryError(ctx, new Attrs()));
                 attrs.type = Type.ERROR;
@@ -109,15 +105,11 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.writeInstrFromRegA(address);
         }
-        else {
+        else{
             address = memoryManager.createNewVariable(TID, 1);
-            ArrayList<String> currentCode = code.get(TID);
-            currentCode.add("Pop regA");
-            String storeInstruction = "Store regA (DirAddr " + address + ")";
-            currentCode.add(storeInstruction);
-            CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.storeFromRegA(address);
         }
+
         // Type of name is inferred from the RHS
         attrs.type = RHSattrs.type;
         attrs.name = name;
@@ -125,56 +117,17 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         symbol.type = attrs.type;
         symbol.address = address;
 
+        // Add newly defined variable into a symbol table for this scope
         currSymbolTable.add(attrs.name, symbol);
         return attrs;
     }
 
+
     @Override
     public Attrs visitExpression(MyLangParser.ExpressionContext ctx) {
-        Attrs attrs = new Attrs();
-
-        if(ctx.getChildCount() == 1)
-            attrs = visit(ctx.getChild(0));
-        else if(ctx.getChildCount() == 3) {
-            Attrs value = visit(ctx.getChild(2));
-            attrs.name =  ctx.getChild(0).getText();
-
-            if(!currSymbolTable.contains(attrs.name)) {
-                attrs.type = Type.ERROR;
-                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
-                System.err.println(error.getText());
-                errorVector.add(error);
-                return attrs;
-            }
-            if (!areCompatible(attrs ,value)) {
-                TypeError error = new TypeError(ctx, attrs, value);
-                errorVector.add(error);
-                System.err.println(error.getText());
-                attrs.type = Type.ERROR;
-            }
-            else {
-
-                SymbolTable st = symbolTables.get(TID);
-                Symbol s = st.getSymbol(attrs.name);
-
-                CodeGenerator.MachineCode.popRegister("regA");
-                if(s.isShared) {
-                    CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
-                }
-                else {
-                    CodeGenerator.MachineCode.storeFromRegA(s.address);
-                }
-            }
-        }
-        return attrs;
+        return visit(ctx.logical_or_expression());
     }
 
-    @Override
-    public Attrs visitExpression_statement(MyLangParser.Expression_statementContext ctx) {
-        if(ctx.getChildCount()==2)
-            visit(ctx.getChild(0));
-        return null;
-    }
 
     @Override
     public Attrs visitLogical_or_expression(MyLangParser.Logical_or_expressionContext ctx) {
@@ -183,8 +136,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
-        else
-        {
+        else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -196,9 +148,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
-        {
+        } else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -211,8 +161,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
         }
-        else
-        {
+        else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -222,48 +171,26 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
         // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
-
-        // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
             visit(ctx.getChild(1));
+            int branchInstructionNumber = CodeGenerator.getCurrentCodeSize();
+
             CodeGenerator.MachineCode.popRegister("regA");
             CodeGenerator.MachineCode.computeEqual();
 
-//            int currentInstructionNr = currCode.size();
-//            CodeGenerator.MachineCode.branchReserveLine();
             CodeGenerator.MachineCode.Action.ifStatementBegin();
             visit(ctx.getChild(2));
 
-//            int instructionNrAfterIfBody = currCode.size();
-//            int label = instructionNrAfterIfBody - currentInstructionNr;
-//            branchInstruction += "( Rel " + label + " )";
-//            currCode.set(currentInstructionNr, branchInstruction);
-            CodeGenerator.MachineCode.Action.ifStatementEnd();
-//            CodeGenerator.MachineCode.Action.branchClaimReserved(currentInstructionNr, branchInstruction);
-            attrs.type = Type.BOOL; // TODO why? If not usable then include in for loop
+            CodeGenerator.MachineCode.Action.ifStatementEnd(branchInstructionNumber);
+            attrs.type = Type.BOOL;
         }
-        // Visit all else/ elif statements
         else {
-            // TODO close scope
-            for(int x = 3; x < ctx.getChildCount(); x++)
-                visit(ctx.getChild(x));
+            // TODO error
         }
 
         return attrs;
     }
 
-    @Override
-    public Attrs visitElse_part(MyLangParser.Else_partContext ctx) {
-        // TODO open and close scope
-        return visit(ctx.getChild(1));
-    }
-
-    @Override
-    public Attrs visitElif_part(MyLangParser.Elif_partContext ctx) {
-
-        // TODO first determine what should be in if_statement, open and close scope
-        return null;
-    }
 
     @Override
     public Attrs visitRelational_operator(MyLangParser.Relational_operatorContext ctx) {
@@ -273,11 +200,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitAdditive_expr(MyLangParser.Additive_exprContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
-        {
+        } else {
             attrs = manyOperation(ctx);
         }
         return attrs;
@@ -286,10 +212,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     @Override
     public Attrs visitMulti_expr(MyLangParser.Multi_exprContext ctx) {
         Attrs attrs;
+
         if(ctx.children.size() == 1) {
             attrs = visit(ctx.getChild(0));
-        }
-        else
+        } else
             attrs = manyOperation(ctx);
 
         return attrs;
@@ -299,28 +225,24 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitPostfix_expr(MyLangParser.Postfix_exprContext ctx) {
         Attrs attrs = new Attrs();
         int child_count = ctx.getChildCount();
+
         if(child_count == 1) {
             attrs = visit(ctx.getChild(0));
-        } else if (child_count == 4)
+        }
+        else if (child_count == 4)
         {
-            if (Objects.equals(ctx.getChild(1).getText(), "["))
-            {
-                // array-like type, child[0] has to be array-like, so String or array, child[2] has to be int-like
-                Attrs array_like = visit(ctx.getChild(0));
-                if(!isArrayLike(array_like))
-                {
-                    TypeError error = new TypeError(ctx, array_like, Type.ARRAY); // TODO not only array but all arraylike
-                    errorVector.add(error);
-                    System.err.println(error.getText());
-                }
-                Attrs int_like = visit(ctx.getChild(2));
-                if (!isIntLike(int_like))
-                {
-                    // Maybe add 'indexing' rule as intermedieate step so that context is changed - error more direct
-                    TypeError error = new TypeError(ctx, int_like, Type.INT); // TODO not only array but all arraylike
-                    errorVector.add(error);
-                    System.err.println(error.getText());
-                }
+            String varName = ctx.getChild(0).getText();
+            visit(ctx.getChild(2));
+            if(currSymbolTable.contains(varName)) {
+                TypeError error = new TypeError(ctx, attrs);
+                errorVector.add(error);
+                attrs.type = Type.ERROR;
+                return attrs;
+            } else {
+                attrs.type = Type.ERROR;
+                NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+                errorVector.add(error);
+                return attrs;
             }
         }
         return attrs;
@@ -328,20 +250,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitAtomic_expr(MyLangParser.Atomic_exprContext ctx) {
-        Attrs attrs = new Attrs();
+        if(ctx.getChildCount() == 1)
+           return visit(ctx.getChild(0));
 
-        if(ctx.getChildCount() == 1) {
-            attrs = visit(ctx.getChild(0));
-        }
-        else if (ctx.getChildCount() == 3)
-            attrs = visit(ctx.getChild(1));
+        if (ctx.getChildCount() == 3)
+            return visit(ctx.getChild(1));
 
-        return attrs;
+        return null;
     }
 
     @Override
     public Attrs visitRead_expression(MyLangParser.Read_expressionContext ctx) {
-        CodeGenerator.MachineCode.Action.readIO();
+        CodeGenerator.MachineCode.Action.readNumber();
         Attrs attrs = new Attrs();
         attrs.type = Type.INT;
         return attrs;
@@ -370,7 +290,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.receiveRegister("regA");
             }
             else
-                CodeGenerator.MachineCode.loadDirAddr(address);
+                CodeGenerator.MachineCode.loadDirAddr(Integer.toString(address));
 
             CodeGenerator.MachineCode.pushRegister("regA");
         }
@@ -379,7 +299,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
             attrs.type = Type.ERROR;
             errorVector.add(error);
-            System.err.println(error.getText());
         }
         return attrs;
     }
@@ -399,8 +318,12 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 primitiveTypeValue = "1";
         }
 
-        CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue);
-        CodeGenerator.MachineCode.pushRegister("regA");
+        CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
+
+        // Push to register if the parent is not an array or string
+        if(ctx.parent.getRuleIndex() != 32 && ctx.parent.getRuleIndex() != 11)
+            CodeGenerator.MachineCode.pushRegister("regA");
+
         return attrs;
     }
 
@@ -414,38 +337,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         return visit(ctx.getChild(0));
     }
 
-    @Override
-    public Attrs visitCompound_type(MyLangParser.Compound_typeContext ctx) {
-        // TODO what about array?
-        Attrs attrs = new Attrs();
-        if(ctx.STRING() != null)
-            attrs.type = Type.STRING; // why you build attr if it is not returned?
-        return visit(ctx.getChild(0));
-    }
 
-    @Override
-    public Attrs visitArray(MyLangParser.ArrayContext ctx) {
-        return visit(ctx.getChild(1));
-    }
 
-    @Override
-    public Attrs visitArgs(MyLangParser.ArgsContext ctx) {
-        // TODO move the responsibility of checking if the same type to visit array
-        Attrs attrs = new Attrs();
-        Attrs childAttrs = visit(ctx.getChild(0));
-        Type type = childAttrs.type;
-
-        for(int x = 1; x < ctx.getChildCount(); x++) {
-            if(ctx.getChild(x).getText().equals(","))
-                x++;
-
-            childAttrs = visit(ctx.getChild(x));
-
-            if(type != childAttrs.type)
-                attrs.type = Type.ERROR;
-        }
-        return attrs;
-    }
 
     @Override
     public Attrs visitWhile_statement(MyLangParser.While_statementContext ctx) {
@@ -475,25 +368,14 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             SymbolTable newST = SymbolTable.provideSymbolTableForFork(currSymbolTable, newThreadIsRunningAddress);
             symbolTables.add(newST);
             currSymbolTable = newST;
-            ArrayList<String> newThreadCode = new ArrayList<>();
-            code.add(newThreadCode);
-//            currCode = newThreadCode;
             TID = threadCounter;
             threadCounter ++;
 
-            //TODO remove this code assuring correct behavior
-            newThreadCode.add("ReadInstr (DirAddr "+ newThreadIsRunningAddress + ")");
-            newThreadCode.add("Receive regA");
-            newThreadCode.add("Compute Equal regA reg0 regA");
-            newThreadCode.add("Branch regA (Rel (-3))");
             CodeGenerator.MachineCode.Action.forkInitialization(newThreadIsRunningAddress);
             visit(ctx.compound_statement());
-            newThreadCode.add("WriteInstr " + "reg0 " +  "(DirAddr "+ newThreadIsRunningAddress + ")");
-            newThreadCode.add("EndProg");
             CodeGenerator.MachineCode.Action.forkFinish(newThreadIsRunningAddress);
 
             this.TID = scopeTID;
-//            this.currCode = scopeCode;
             this.currSymbolTable = scopeST;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -510,7 +392,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         if(getType(fork) != Type.FORK)
         {
             TypeError error = new TypeError(ctx, fork, Type.FORK);
-            System.err.println(error.getText());
             errorVector.add(error);
         }
         CodeGenerator.MachineCode.Action.join();
@@ -540,16 +421,14 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             else
             {
-                TypeError error = new TypeError(ctx, attrs, attrs);
+                TypeError error = new LockTypeError(ctx, attrs);
                 errorVector.add(error);
-                System.err.println(error.getTextForLock());
             }
         }
         else
         {
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
             errorVector.add(error);
-            System.err.println(error.getText());
         }
         return attrs;
     }
@@ -564,7 +443,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     private boolean areCompatible(Attrs attr1, Attrs attrs2)
     {
-        //TODO improve
         return getType(attr1).equals(getType(attrs2));
     }
 
@@ -576,9 +454,10 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             return LHS;
 
         Attrs RHS;
+        String operationCode = "";
         for(int i = 2; i < ctx.getChildCount(); i+=2)
         {
-            String operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
+            operationCode = CodeGenerator.MachineCode.getOperationCode(ctx.getChild(i-1).getText());
 
             RHS = visit(ctx.getChild(i));
             // TODO the same as with assignment, check compatible types here. USE ctx.getChild(i+1)
@@ -590,7 +469,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             {
                 TypeError error = new TypeError(ctx, LHS, RHS);
                 errorVector.add(error);
-                System.err.println(error.getText());
             }
             CodeGenerator.MachineCode.popRegister("regB");
             CodeGenerator.MachineCode.popRegister("regA");
@@ -598,19 +476,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.pushRegister("regA");
             LHS = RHS;
         }
+
+        assert operationCode != null;
+        if(operationCode.equals("Add ") || operationCode.equals("Sub ") | operationCode.equals("Sub "))
+            return LHS;
+
+        LHS.type = Type.BOOL;
         return LHS;
-    }
-
-    private boolean isArrayLike(Attrs attrs)
-    {
-        // TODO impove;
-        return attrs.type == Type.ARRAY  || attrs.type == Type.STRING;
-    }
-
-    private boolean isIntLike(Attrs attrs)
-    {
-        // TODO impove;
-        return attrs.type == Type.INT  || attrs.type == Type.BOOL;
     }
 
     @Override
@@ -619,7 +491,43 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
-        CodeGenerator.MachineCode.Action.writeIO();
+        if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
+            CodeGenerator.MachineCode.Action.printNumber();
         return null;
     }
+
+
+    @Override
+    public Attrs visitAssignment_statement(MyLangParser.Assignment_statementContext ctx) {
+        Attrs attrs = new Attrs();
+        Attrs value = visit(ctx.getChild(2));
+        attrs.name =  ctx.getChild(0).getText();
+
+        if(!currSymbolTable.contains(attrs.name)) {
+            attrs.type = Type.ERROR;
+            NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            errorVector.add(error);
+            return attrs;
+        }
+        attrs.type = currSymbolTable.getType(attrs.name);
+
+        if (!areCompatible(attrs ,value)) {
+            TypeError error = new TypeError(ctx, attrs, value);
+            errorVector.add(error);
+            attrs.type = Type.ERROR;
+        }
+        else {
+            SymbolTable st = symbolTables.get(TID);
+            Symbol s = st.getSymbol(attrs.name);
+            CodeGenerator.MachineCode.popRegister("regA");
+
+            if(s.isShared) {
+                CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
+            }
+            else {
+                CodeGenerator.MachineCode.storeFromRegA(s.address);
+            }
+        }
+        return attrs;
+        }
 }

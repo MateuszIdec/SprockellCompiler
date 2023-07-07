@@ -5,9 +5,7 @@ import java.util.Stack;
 
 public class MemoryManager {
     static int GLOBAL_MEMORY_SIZE = 8;
-    private Integer[] globalMemory = new Integer[GLOBAL_MEMORY_SIZE];
     private Stack<Integer> freeGlobalMemoryAddresses = new Stack<>();
-    private int currentGlobalIndex = 0;
 
     private ArrayList<LocalMemoryManager> localMemoryManagers = new ArrayList<>();
 
@@ -21,43 +19,10 @@ public class MemoryManager {
     private class  LocalMemoryManager
     {
         int LOCAL_MEMORY_SIZE = 32;
-        String[] registers = {"regA", "regB", "regC", "regD", "regE", "regF"};
-        private int currentRegisterIndex = 0;
         private int currLocalIndex = 0;
-        ArrayList<String> currRegisters = new ArrayList<>(); // List of registers that are currently being used
-        Stack<String> deallocatedRegisters = new Stack<>();
         Integer[] localMemory = new Integer[LOCAL_MEMORY_SIZE];
 
-        public String allocateRegister()
-        {
-            if(deallocatedRegisters.size() == 0 )
-            {
-                if(currentRegisterIndex < registers.length)
-                {
-                    String reg = registers[currentRegisterIndex];
-                    currentRegisterIndex++;
-                    currRegisters.add(reg);
-                    System.out.println("[REG] " + reg  + " allocated");
-                    return reg;
-                }
-                else
-                {
-                    // Not enough registers!!!
-                }
-            }
-            else
-            {
-                System.out.println("[REG] " + deallocatedRegisters.peek()  + " allocated");
-                return deallocatedRegisters.pop();
-            }
-            return null;
-        }
-        public void deallocateRegister(String regName)
-        {
-            // maybe add check the regName in registers
-            System.out.println("[REG] "+ regName + " deallocated");
-            deallocatedRegisters.push(regName);
-        }
+
         public int createNewVariable(int size) throws OutOfMemoryError
         {
             if(currLocalIndex + size < LOCAL_MEMORY_SIZE)
@@ -92,27 +57,16 @@ public class MemoryManager {
         if(address < GLOBAL_MEMORY_SIZE)
             freeGlobalMemoryAddresses.push(address);
         throw new Exception();
+        // USE IT IN JOIN
     }
 
     public void createNewLocalMemoryManager()
     {
         localMemoryManagers.add(new LocalMemoryManager());
     }
-    public String allocateRegister(int localMemoryManagerIndex)
-    {
-        return localMemoryManagers.get(localMemoryManagerIndex).allocateRegister();
-    }
-    public void deallocateRegister(int localMemoryManagerIndex, String regName)
-    {
-        localMemoryManagers.get(localMemoryManagerIndex).deallocateRegister(regName);
-    }
     public int createNewVariable(int localMemoryManagerIndex, int size)
     {
         return localMemoryManagers.get(localMemoryManagerIndex).createNewVariable(size);
-    }
-    public void updateLocalVar(int localMemoryManagerIndex, int address, int size) throws Exception
-    {
-        localMemoryManagers.get(localMemoryManagerIndex).updateLocalVar(address, size);
     }
 
 

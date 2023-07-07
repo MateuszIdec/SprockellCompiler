@@ -1,0 +1,2 @@
+	var x = 5;
+	while x {var y = 2; while y {print x + y; y = y - 1;} x = x - 1;}

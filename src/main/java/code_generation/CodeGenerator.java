@@ -19,10 +19,17 @@ import java.nio.file.Path;
  * Responsible for generating the machine code from the source language.
  */
 public class CodeGenerator {
-    private static final ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
+    private static ArrayList<ArrayList<String>> code = new ArrayList<>(new ArrayList<>());
     private static int threadID = 0;
     private static int threadCounter = 1;
     private static int scopeID = 0;
+
+    public static void reset() {
+        threadID = 0;
+        threadCounter = 1;
+        scopeID = 0;
+        code = new ArrayList<>(new ArrayList<>());
+    }
 
     public static int getCurrentCodeSize() {
         return code.get(threadID).size();
@@ -53,8 +60,6 @@ public class CodeGenerator {
             throw new Exception("Syntax error");
 
         visitor.visit(tree);
-        // TODO remove when code generation will happen in CodeGenerator
-//        code = visitor.getCode();
 
         // Check if there are any parsing errors
         if(visitor.getErrorVector().size() > 0) {
@@ -68,7 +73,7 @@ public class CodeGenerator {
         StringBuilder result = new StringBuilder();
         int threadCount = 0;
 
-        result.append("module Main where \n\nimport Sprockell \n\n");
+        result.append("module Main where\n\nimport Sprockell\nimport Data.Char\n\n");
         for(ArrayList<String> threadCode : code) {
             result.append("prog").append(threadCount++).append(" = ");
             result.append(prettyCode(threadCode.toString())).append("\n\n");
@@ -77,16 +82,16 @@ public class CodeGenerator {
         result.append("\n\nmain = run [");
         for(int id = 0; id < threadCount - 1; id++) {
             result.append("prog").append(id);
-                result.append(",");
+            result.append(",");
         }
         result.append("prog").append(threadCount - 1).append("]");
 
-        if(consolePrint){
-                System.out.println(prettyCodeWithLineNumbers(result.toString()));
-            }
+        if(consolePrint) {
+            System.out.println(prettyCodeWithLineNumbers(result.toString()));
+        }
 
         return result.toString();
-        }
+    }
 
 
     /**
@@ -190,13 +195,14 @@ public class CodeGenerator {
             code.get(threadID).add("Compute Equal regA reg0 regA");
         }
 
-        public static void loadDirAddr(int address) {
+        public static void loadDirAddr(String address) {
             code.get(threadID).add("Load (DirAddr " + address + ") regA");
         }
 
-        public static void loadImmediate(String primitiveTypeValue) {
-            code.get(threadID).add("Load (ImmValue " + primitiveTypeValue +") regA");
+        public static void loadImmediate(String primitiveTypeValue, String register) {
+            code.get(threadID).add("Load (ImmValue (" + primitiveTypeValue +")) " + register);
         }
+
 
         public static void computeOperationCode(String operationCode) {
             code.get(threadID).add("Compute " + operationCode + "regA regB regA");
@@ -218,6 +224,11 @@ public class CodeGenerator {
             code.get(threadID).add("Jump (Abs " + startOfWhile + ")");
         }
 
+        public static void numberOutput() {
+            code.get(threadID).add("WriteInstr regA numberIO");
+        }
+
+
         public static void readInstrWithDirAddr(int address) {
             code.get(threadID).add("ReadInstr (DirAddr "+ address +")");
         }
@@ -238,6 +249,10 @@ public class CodeGenerator {
                     return "Gt ";
                 case "<":
                     return "Lt ";
+                case ">=":
+                    return "GtE ";
+                case "<=":
+                    return "LtE ";
                 case "||":
                     return "Or ";
                 case "&&":
@@ -247,7 +262,7 @@ public class CodeGenerator {
         }
 
         /**
-         * Actions created from machine code instructions
+         * Actions created from machine code instructions.
          */
         public static class Action {
             static int currentInstructionNumber;
@@ -257,12 +272,12 @@ public class CodeGenerator {
                     code.add(new ArrayList<>());
                 }
 
-                code.get(threadID).add("Load (ImmValue 1) regA");
-                code.get(threadID).add("WriteInstr regA (DirAddr " + globalVarAddress + ")");
+                loadImmediate("1", "regA");
+                writeInstrFromRegA(globalVarAddress);
             }
 
             public static void progEnd(int globalVarAddress) {
-                code.get(threadID).add("WriteInstr " + "reg0 " + "(DirAddr " + globalVarAddress + ")");
+                writeInstrFromRegA(globalVarAddress);
                 code.get(threadID).add("EndProg");
             }
 
@@ -271,10 +286,9 @@ public class CodeGenerator {
                 branchReserveLine();
             }
 
-            public static void ifStatementEnd() {
-                int instructionNumberAfterIfBody = code.size();
-                int label = instructionNumberAfterIfBody - currentInstructionNumber;
-                branchClaimReserved(currentInstructionNumber, "Branch regA (Rel " + label +")");
+            public static void ifStatementEnd(int branchInstructionNumber) {
+                int instructionNumberAfterBody = getCurrentCodeSize();
+                branchClaimReserved( branchInstructionNumber + 2, "Branch regA (Abs " + instructionNumberAfterBody +")");
             }
 
             public static void whileStatementBegin() {
@@ -286,29 +300,30 @@ public class CodeGenerator {
             public static void whileStatementEnd(int startOfWhile, int branchInstructionNumber) {
                 jump(startOfWhile);
 
-                int instructionNrAfterBody = CodeGenerator.getCurrentCodeSize();
+                int instructionNrAfterBody = getCurrentCodeSize();
 
                 String branchInstruction = "Branch regA (Abs " + instructionNrAfterBody + ")";
-                CodeGenerator.MachineCode.Action.branchClaimReserved(branchInstructionNumber + 2, branchInstruction);
+                branchClaimReserved(branchInstructionNumber + 2, branchInstruction);
             }
 
             public static void branchClaimReserved(int branchReservedLineID, String branchInstruction) {
                 code.get(threadID).set(branchReservedLineID, branchInstruction);
             }
 
-            public static void readIO() {
+            public static void readNumber() {
                 code.get(threadID).add("ReadInstr numberIO");
-                code.get(threadID).add("Receive regA");
-                code.get(threadID).add("Push regA");
+                receiveRegister("regA");
+                pushRegister("regA");
             }
 
-            public static void writeIO() {
+            public static void printNumber() {
                 popRegister("regA");
-                code.get(threadID).add("WriteInstr regA numberIO");
+                numberOutput();
             }
+
 
             public static void threadID(int address) {
-                loadImmediate(Integer.toString(address));
+                loadImmediate(Integer.toString(address), "regA");
                 pushRegister("regA");
             }
 
@@ -330,9 +345,9 @@ public class CodeGenerator {
             }
 
             public static void forkEnd(int newThreadAddress) {
-                loadImmediate(Integer.toString(newThreadAddress));
+                loadImmediate(Integer.toString(newThreadAddress), "regA");
                 pushRegister("regA");
-                loadImmediate("1");
+                loadImmediate("1", "regA");
                 writeInstrFromRegA(newThreadAddress);
             }
 
@@ -353,6 +368,7 @@ public class CodeGenerator {
             public static void placeLock(int address) {
                 code.get(threadID).add("WriteInstr reg0 (DirAddr "+ address +")");
             }
+
         }
     }
 }
