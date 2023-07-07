@@ -16,7 +16,7 @@ statement:  var_def
 body: statement+;
 compound_statement: '{' body '}';
 
-assignment_statement: IDENTIFIER  ('[' expression ']')? assignment_operator expression ';';
+assignment_statement: (POINTER)? IDENTIFIER  ('[' expression ']')? assignment_operator expression ';';
 
 expression: logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;
@@ -33,7 +33,7 @@ atomic_expr:  primitive_type
             | fork_expression
             | array;
 
-var_call: IDENTIFIER ('[' expression ']')?;
+var_call: (REFERENCE | POINTER)? IDENTIFIER ('[' expression ']')?;
 
 assignment_operator: '=';
 relational_operator: '==' | '!=' | '>=' | '<=' | '>' | '<';
@@ -51,7 +51,7 @@ join_statement: JOIN expression ';';
 lock_statement: LOCK IDENTIFIER ';'
               | UNLOCK IDENTIFIER ';';
 
-var_def: ((SHARED)? 'var') IDENTIFIER '=' expression ';' ;
+var_def: ((SHARED)? 'var') (POINTER)? IDENTIFIER '=' expression ';' ;
 
 print_statement: 'print' expression ';';
 read_expression: 'read';
@@ -69,6 +69,8 @@ TID : 'Tid';
 LOCK: 'lock';
 UNLOCK: 'unlock';
 SHARED: 'shared';
+POINTER: '*';
+REFERENCE: '&';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 INT: '0' | '-'? [1-9] [0-9]*;
