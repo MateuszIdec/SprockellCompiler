@@ -7,7 +7,6 @@ import antlr4.ut.pp.parser.MyLangLexer;
 import antlr4.ut.pp.parser.MyLangParser;
 import code_generation.Visitor;
 import errors.LockTypeError;
-import errors.PrintError;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Before;
@@ -206,6 +205,16 @@ public class TestParser {
         assertTrue(visitor.getErrorVector().get(0) instanceof LockTypeError);
     }
     @Test
+    public void testLockBoolean() {
+        String input = "var x = True; lock x;";
+        assertEquals(1, parseStringAndGetErrorCount(input));
+    }
+    @Test
+    public void testLockSharedBoolean() {
+        String input = "shared var x = True; lock x;";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
+    @Test
     public void testLockFork() {
         String input = "var x = fork { var y = 0;}; lock x;";
         parseStringAndGetErrorCount(input);
@@ -222,8 +231,6 @@ public class TestParser {
         String input = "var x = fork { var y = 0;}; var y = 5; join y;";
         parseStringAndGetErrorCount(input);
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
-
-        String input1 = "join x;";
     }
     @Test
     public void testTid() {
@@ -340,6 +347,11 @@ public class TestParser {
         assertTrue(visitor.getErrorVector().get(0) instanceof TypeError);
     }
 
+    @Test
+    public void testIfStatementWithThreadStatusVariable() {
+        String input = "var y = 0; var x = fork {var y = 2;}; join x; if x == 1 {y = 1;}; if 1 == x {y =1;};";
+        assertEquals(0, parseStringAndGetErrorCount(input));
+    }
     @Test
     public void testIf() {
         String input = "var x = 0; if y == 5 { y = 2;}";
