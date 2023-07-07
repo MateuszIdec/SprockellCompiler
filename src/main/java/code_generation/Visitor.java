@@ -52,7 +52,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     {
         Symbol tidSymbol = new Symbol();
         tidSymbol.address = globalVarAddress;
-        tidSymbol.type = Type.FORK;
+        tidSymbol.type = Type.THREAD_STATUS;
         tidSymbol.isShared = false;
         currSymbolTable.add("TID", tidSymbol );
     }
@@ -379,7 +379,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        attrs.type = Type.FORK;
+        attrs.type = Type.THREAD_STATUS;
         CodeGenerator.MachineCode.Action.forkEnd(newThreadIsRunningAddress);
         return attrs;
     }
@@ -388,9 +388,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitJoin_statement(MyLangParser.Join_statementContext ctx) {
         Attrs fork = visit(ctx.getChild(1));
 
-        if(getType(fork) != Type.FORK)
+        if(getType(fork) != Type.THREAD_STATUS)
         {
-            TypeError error = new TypeError(ctx, fork, Type.FORK);
+            TypeError error = new TypeError(ctx, fork, Type.THREAD_STATUS);
             errorVector.add(error);
         }
         CodeGenerator.MachineCode.Action.join();
@@ -490,6 +490,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         if(attrs.type.equals(Type.ERROR))
             return null;
+        else if(attrs.type.equals(Type.THREAD_STATUS)) {
+            errorVector.add(new PrintError(ctx, attrs));
+        }
         if(attrs.type.equals(Type.INT) | attrs.type.equals(Type.BOOL))
             CodeGenerator.MachineCode.Action.printNumber();
         return null;
