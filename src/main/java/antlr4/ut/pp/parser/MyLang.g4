@@ -60,7 +60,7 @@ print_statement: 'print' (atomic_expr | postfix_expr | expression) ';';
 read_expression: 'read';
 
 primitive_type: INT | BOOL;
-compound_type: array | STRING;
+compound_type: array;
 array: '[' ((primitive_type | atomic_expr | expression) (',' (primitive_type | atomic_expr | expression))*)? ']';
 
 

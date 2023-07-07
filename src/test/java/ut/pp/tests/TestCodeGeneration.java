@@ -37,6 +37,7 @@ public class TestCodeGeneration {
     @Before
     public void setup() {
         visitor = new Visitor();
+        CodeGenerator.reset();
     }
 
     @Test

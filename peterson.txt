@@ -1,6 +1,3 @@
-
-
-
 shared var lock0 = False;
 shared var lock1 = False;
 
