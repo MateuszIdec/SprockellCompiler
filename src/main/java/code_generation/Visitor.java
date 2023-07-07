@@ -81,10 +81,9 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
         // Check if variable is already defined in local scope
         if(currSymbolTable.checkLocalScope(name)) {
+            RedefinitonError error = new RedefinitonError(ctx, attrs);
             attrs.type = Type.ERROR;
             attrs.name = name;
-
-            RedefinitonError error = new RedefinitonError(ctx, attrs);
             errorVector.add(error);
             return attrs;
         }
@@ -478,7 +477,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         assert operationCode != null;
-        if(operationCode.equals("Add ") || operationCode.equals("Sub ") | operationCode.equals("Sub "))
+        if(operationCode.equals("Add") || operationCode.equals("Sub") | operationCode.equals("Mul"))
             return LHS;
 
         LHS.type = Type.BOOL;
@@ -504,8 +503,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         attrs.name =  ctx.getChild(0).getText();
 
         if(!currSymbolTable.contains(attrs.name)) {
-            attrs.type = Type.ERROR;
             NameNotFoundError error = new NameNotFoundError(ctx, attrs);
+            attrs.type = Type.ERROR;
             errorVector.add(error);
             return attrs;
         }

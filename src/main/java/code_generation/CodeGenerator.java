@@ -205,7 +205,7 @@ public class CodeGenerator {
 
 
         public static void computeOperationCode(String operationCode) {
-            code.get(threadID).add("Compute " + operationCode + "regA regB regA");
+            code.get(threadID).add("Compute " + operationCode + " regA regB regA");
         }
 
         public static void branchWithRel(String register, String relValue) {
@@ -236,27 +236,27 @@ public class CodeGenerator {
         {
             switch (operator) {
                 case "+":
-                    return  "Add ";
+                    return  "Add";
                 case "-":
-                    return "Sub ";
+                    return "Sub";
                 case "*":
-                    return "Mul ";
+                    return "Mul";
                 case "==":
-                    return "Equal ";
+                    return "Equal";
                 case "!=":
-                    return "NEq ";
+                    return "NEq";
                 case ">":
-                    return "Gt ";
+                    return "Gt";
                 case "<":
-                    return "Lt ";
+                    return "Lt";
                 case ">=":
-                    return "GtE ";
+                    return "GtE";
                 case "<=":
-                    return "LtE ";
+                    return "LtE";
                 case "||":
-                    return "Or ";
+                    return "Or";
                 case "&&":
-                    return "And ";
+                    return "And";
             }
             return null;
         }
