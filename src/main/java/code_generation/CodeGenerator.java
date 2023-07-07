@@ -189,7 +189,9 @@ public class CodeGenerator {
         public static void storeFromRegA(int address) {
             code.get(threadID).add("Store regA (DirAddr " + address + ")");
         }
-
+        public static void storeToMemoryLocationInRegister(String valueRegister, String addressRegister) {
+            code.get(threadID).add("Store " + valueRegister + " (IndAddr " + addressRegister + ")");
+        }
         public static void computeEqual() {
             code.get(threadID).add("Compute Equal regA reg0 regA");
         }
@@ -206,8 +208,8 @@ public class CodeGenerator {
             code.get(threadID).add("Load (IndAddr " + registerContainingAddress +") " + targetRegister);
         }
 
-        public static void computeOperationCode(String operationCode) {
-            code.get(threadID).add("Compute " + operationCode + " regA regB regA");
+        public static void computeOperationCode(String operationCode, String firstReg, String secondReg, String thirdReg) {
+            code.get(threadID).add("Compute " + operationCode + " " + firstReg + " " + secondReg + " " + thirdReg);
         }
 
         public static void branchWithRel(String register, String relValue) {

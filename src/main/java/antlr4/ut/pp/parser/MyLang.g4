@@ -16,7 +16,7 @@ statement:  var_def
 body: statement+;
 compound_statement: '{' body '}';
 
-assignment_statement: IDENTIFIER assignment_operator expression ';';
+assignment_statement: IDENTIFIER  ('[' expression ']')? assignment_operator expression ';';
 
 expression: logical_or_expression;
 logical_or_expression: logical_and_expression ('||' logical_and_expression)*;

@@ -342,10 +342,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
         }
 
         CodeGenerator.MachineCode.loadImmediate(primitiveTypeValue, "regA");
-
-        // Push to register if the parent is not an array or string
-        if(ctx.parent.getRuleIndex() != 32 && ctx.parent.getRuleIndex() != 11)
-            CodeGenerator.MachineCode.pushRegister("regA");
+        CodeGenerator.MachineCode.pushRegister("regA");
 
         return attrs;
     }
@@ -503,7 +500,7 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             }
             CodeGenerator.MachineCode.popRegister("regB");
             CodeGenerator.MachineCode.popRegister("regA");
-            CodeGenerator.MachineCode.computeOperationCode(operationCode);
+            CodeGenerator.MachineCode.computeOperationCode(operationCode, "regA", "regB", "regC");
             CodeGenerator.MachineCode.pushRegister("regA");
             LHS = RHS;
         }
@@ -534,8 +531,18 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
 
     @Override
     public Attrs visitAssignment_statement(MyLangParser.Assignment_statementContext ctx) {
-        Attrs attrs = new Attrs();
-        Attrs value = visit(ctx.getChild(2));
+        boolean primitiveCase = true;
+        if(ctx.getChildCount() == 7)
+            primitiveCase = false;
+
+        Attrs attrs = new Attrs();;
+        Attrs value;
+
+        if(primitiveCase)
+            value = visit(ctx.getChild(2));
+        else
+            value = visit(ctx.getChild(5));
+
         attrs.name =  ctx.getChild(0).getText();
 
         if(!currSymbolTable.contains(attrs.name)) {
@@ -550,12 +557,13 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             TypeError error = new TypeError(ctx, attrs, value);
             errorVector.add(error);
             attrs.type = Type.ERROR;
+            return attrs;
         }
-        else {
-            SymbolTable st = symbolTables.get(TID);
-            Symbol s = st.getSymbol(attrs.name);
-            CodeGenerator.MachineCode.popRegister("regA");
+        SymbolTable st = symbolTables.get(TID);
+        Symbol s = st.getSymbol(attrs.name);
 
+        if(primitiveCase) {
+            CodeGenerator.MachineCode.popRegister("regA");
             if(s.isShared) {
                 CodeGenerator.MachineCode.writeInstrFromRegA(s.address);
             }
@@ -563,6 +571,15 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
                 CodeGenerator.MachineCode.storeFromRegA(s.address);
             }
         }
+        else {
+            CodeGenerator.MachineCode.popRegister("regB");
+            visit(ctx.getChild(2));
+            CodeGenerator.MachineCode.popRegister("regA");
+            CodeGenerator.MachineCode.loadImmediate(String.valueOf(s.address), "regC");
+            CodeGenerator.MachineCode.computeOperationCode("Add", "regA", "regC", "regA");
+            CodeGenerator.MachineCode.storeToMemoryLocationInRegister("regB", "regA");
+        }
+
         return attrs;
         }
     @Override
