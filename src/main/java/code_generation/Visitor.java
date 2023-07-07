@@ -171,8 +171,6 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
     public Attrs visitIf_statement(MyLangParser.If_statementContext ctx) {
         // TODO add scope, maybe make a if in body, if parent is if statement then dont make new scope
         Attrs attrs = new Attrs();
-
-        // Check if there is elif or else
         if(ctx.getChildCount() == 3) {
             visit(ctx.getChild(1));
             int branchInstructionNumber = CodeGenerator.getCurrentCodeSize();
@@ -186,12 +184,8 @@ public class Visitor extends MyLangBaseVisitor<Attrs> {
             CodeGenerator.MachineCode.Action.ifStatementEnd(branchInstructionNumber);
             attrs.type = Type.BOOL;
         }
-
-        // Visit all else/ elif statements
         else {
-            // TODO close scope
-            for(int x = 3; x < ctx.getChildCount(); x++)
-                visit(ctx.getChild(x));
+            // TODO error
         }
 
         return attrs;

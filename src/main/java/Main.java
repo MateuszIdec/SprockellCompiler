@@ -2,7 +2,7 @@ import code_generation.CodeGenerator;
 
 public class Main {
     public static void main(String[] args) {
-        String input = "src/main/java/sample_programs/banking.txt";
+        String input = "input.txt";
         String output = "output.hs";
 
         if(args.length == 2) {
